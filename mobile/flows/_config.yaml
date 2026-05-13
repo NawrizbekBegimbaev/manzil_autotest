@@ -1,0 +1,4 @@
+# Maestro config shared by flows in this directory.
+# Concrete app values are passed from pytest through `--env`.
+
+appId: ${APP_ID}

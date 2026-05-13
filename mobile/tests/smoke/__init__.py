@@ -1,0 +1,1 @@
+"""Mobile smoke tests."""

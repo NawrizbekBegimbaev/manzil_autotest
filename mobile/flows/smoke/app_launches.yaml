@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    text: ".*"
+    timeout: 10000

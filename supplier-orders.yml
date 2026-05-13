@@ -1,0 +1,116 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - button [ref=e6] [cursor=pointer]:
+          - img [ref=e7]
+        - link "Logo" [ref=e10] [cursor=pointer]:
+          - /url: /orders
+          - img "Full logo" [ref=e11]
+        - region "scrollable content" [ref=e16]:
+          - navigation [ref=e18]:
+            - list [ref=e19]:
+              - listitem [ref=e20]:
+                - list [ref=e21]:
+                  - listitem [ref=e22]:
+                    - link "Аналитика" [ref=e23] [cursor=pointer]:
+                      - /url: /dashboard
+                      - img [ref=e25]
+                      - generic [ref=e28]: Аналитика
+                  - listitem [ref=e29]:
+                    - link "Заявки" [ref=e30] [cursor=pointer]:
+                      - /url: /orders
+                      - img [ref=e32]
+                      - generic [ref=e35]: Заявки
+                  - listitem [ref=e36]:
+                    - link "Склады" [ref=e37] [cursor=pointer]:
+                      - /url: /warehouses
+                      - img [ref=e39]
+                      - generic [ref=e42]: Склады
+                  - listitem [ref=e43]:
+                    - link "Сотрудники" [ref=e44] [cursor=pointer]:
+                      - /url: /employees
+                      - img [ref=e46]
+                      - generic [ref=e49]: Сотрудники
+      - generic [ref=e50]:
+        - banner [ref=e51]:
+          - generic [ref=e53]:
+            - button "Languages button" [ref=e54] [cursor=pointer]:
+              - img "RU" [ref=e56]
+            - button "Кнопка уведомлений" [ref=e57] [cursor=pointer]:
+              - generic [ref=e58]:
+                - img [ref=e59]
+                - generic [ref=e62]: "2"
+            - button "Account button" [ref=e63] [cursor=pointer]:
+              - generic [ref=e64]:
+                - img [ref=e66]
+                - img [ref=e70]
+        - main [ref=e74]:
+          - generic [ref=e76]:
+            - generic [ref=e78]:
+              - heading "Заявки" [level=4] [ref=e79]
+              - paragraph [ref=e80]: Заявки компании на перевозку грузов
+            - generic [ref=e82]:
+              - generic [ref=e83]:
+                - generic [ref=e84]: Статус
+                - generic [ref=e85]:
+                  - combobox "Статус Все статусы" [ref=e86] [cursor=pointer]: Все статусы
+                  - textbox: all
+                  - img
+                  - group:
+                    - generic: Статус
+              - generic [ref=e87]:
+                - generic [ref=e88]: Поиск
+                - generic [ref=e89]:
+                  - textbox "Поиск" [ref=e90]:
+                    - /placeholder: Номер, тип груза, адрес выгрузки
+                  - group:
+                    - generic: Поиск
+            - table [ref=e93]:
+              - rowgroup [ref=e94]:
+                - row "Номер Груз Маршрут Дата Статус" [ref=e95]:
+                  - columnheader "Номер" [ref=e96]
+                  - columnheader "Груз" [ref=e97]
+                  - columnheader "Маршрут" [ref=e98]
+                  - columnheader "Дата" [ref=e99]
+                  - columnheader "Статус" [ref=e100]
+              - rowgroup [ref=e101]:
+                - row "MZL-0003 Умерший человек 200 кг · 200 м³ Karakalpakstan, Nukus, Pushkin 33 → Karakalpakstan, Nukus, Pushkin 33 02.05.2026 Активна" [ref=e102] [cursor=pointer]:
+                  - cell "MZL-0003" [ref=e103]:
+                    - heading "MZL-0003" [level=6] [ref=e104]
+                  - cell "Умерший человек 200 кг · 200 м³" [ref=e105]:
+                    - paragraph [ref=e106]: Умерший человек
+                    - generic [ref=e107]: 200 кг · 200 м³
+                  - cell "Karakalpakstan, Nukus, Pushkin 33 → Karakalpakstan, Nukus, Pushkin 33" [ref=e108]:
+                    - paragraph [ref=e109]: Karakalpakstan, Nukus, Pushkin 33
+                    - generic [ref=e110]: → Karakalpakstan, Nukus, Pushkin 33
+                  - cell "02.05.2026" [ref=e111]
+                  - cell "Активна" [ref=e112]:
+                    - generic [ref=e114]: Активна
+                - row "MZL-0002 Человек 100 кг · 100 м³ Karakalpakstan, Nukus, Pushkin 56 → Алмата 30.05.2026 В работе" [ref=e115] [cursor=pointer]:
+                  - cell "MZL-0002" [ref=e116]:
+                    - heading "MZL-0002" [level=6] [ref=e117]
+                  - cell "Человек 100 кг · 100 м³" [ref=e118]:
+                    - paragraph [ref=e119]: Человек
+                    - generic [ref=e120]: 100 кг · 100 м³
+                  - cell "Karakalpakstan, Nukus, Pushkin 56 → Алмата" [ref=e121]:
+                    - paragraph [ref=e122]: Karakalpakstan, Nukus, Pushkin 56
+                    - generic [ref=e123]: → Алмата
+                  - cell "30.05.2026" [ref=e124]
+                  - cell "В работе" [ref=e125]:
+                    - generic [ref=e127]: В работе
+                - row "MZL-0001 Одежды 100 кг · 100 м³ Karakalpakstan, Nukus, Pushkin 56 → Ташкент 30.05.2026 Активна" [ref=e128] [cursor=pointer]:
+                  - cell "MZL-0001" [ref=e129]:
+                    - heading "MZL-0001" [level=6] [ref=e130]
+                  - cell "Одежды 100 кг · 100 м³" [ref=e131]:
+                    - paragraph [ref=e132]: Одежды
+                    - generic [ref=e133]: 100 кг · 100 м³
+                  - cell "Karakalpakstan, Nukus, Pushkin 56 → Ташкент" [ref=e134]:
+                    - paragraph [ref=e135]: Karakalpakstan, Nukus, Pushkin 56
+                    - generic [ref=e136]: → Ташкент
+                  - cell "30.05.2026" [ref=e137]
+                  - cell "Активна" [ref=e138]:
+                    - generic [ref=e140]: Активна
+  - region "Notifications alt+T"
