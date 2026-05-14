@@ -1,0 +1,10 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    file: login_and_open_profile.yaml
+- scroll
+- scroll
+- tapOn: "Tahrirlash"
+- extendedWaitUntil:
+    visible: "Profilni tahrirlash"
+    timeout: 5000

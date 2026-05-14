@@ -36,7 +36,8 @@ packages = [
     "config", "data", "utils",
     "mobile", "mobile.runner", "mobile.seed", "mobile.tests",
     "mobile.tests.driver", "mobile.tests.driver.orders",
-    "mobile.tests.driver.offers", "mobile.tests.smoke",
+    "mobile.tests.driver.offers", "mobile.tests.driver.profile",
+    "mobile.tests.smoke",
     "web_ui", "web_ui.pages", "web_ui.pages.auth", "web_ui.pages.supplier",
     "web_ui.pages.tk", "web_ui.pages._common", "web_ui.seed",
 ]

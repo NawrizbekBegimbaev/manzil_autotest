@@ -1,0 +1,36 @@
+appId: ${APP_ID}
+tags:
+  - profile
+  - mutation
+  - requires_real_account
+---
+- runFlow:
+    file: ../_common/login_and_open_profile_edit.yaml
+- scroll
+- scroll
+- tapOn:
+    text: "MAN"
+- eraseText: 10
+- inputText: "SCANIA"
+- hideKeyboard
+- tapOn:
+    text: "TAHOE"
+- eraseText: 10
+- inputText: "R450"
+- hideKeyboard
+- tapOn: "Saqlash"
+- assertVisible: "SCANIA"
+- assertVisible: "R450"
+- tapOn:
+    text: "SCANIA"
+- eraseText: 10
+- inputText: "MAN"
+- hideKeyboard
+- tapOn:
+    text: "R450"
+- eraseText: 10
+- inputText: "TAHOE"
+- hideKeyboard
+- tapOn: "Saqlash"
+- assertVisible: "MAN"
+- assertVisible: "TAHOE"

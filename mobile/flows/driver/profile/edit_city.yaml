@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - profile
+  - mutation
+  - requires_real_account
+---
+- runFlow:
+    file: ../_common/login_and_open_profile_edit.yaml
+- tapOn:
+    text: "Nawrizbek_20"
+- eraseText: 20
+- inputText: "Toshkent"
+- assertVisible: "Toshkent"
+- hideKeyboard
+- scroll
+- scroll
+- tapOn: "Saqlash"
+- assertVisible: "Profilni tahrirlash"

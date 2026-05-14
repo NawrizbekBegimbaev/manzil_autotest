@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - profile
+  - mutation
+  - requires_real_account
+---
+- runFlow:
+    file: ../_common/login_and_open_profile_edit.yaml
+- tapOn:
+    text: ${DRIVER_FULL_NAME}
+- eraseText: 60
+- inputText: "E2E Test Driver"
+- assertVisible: "E2E Test Driver.*"

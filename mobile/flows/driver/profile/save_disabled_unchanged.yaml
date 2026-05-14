@@ -1,0 +1,11 @@
+appId: ${APP_ID}
+tags:
+  - profile
+---
+- runFlow:
+    file: ../_common/login_and_open_profile_edit.yaml
+- assertVisible: "Profilni tahrirlash"
+- scroll
+- scroll
+- tapOn: "Saqlash"
+- assertVisible: "Profilni tahrirlash"
