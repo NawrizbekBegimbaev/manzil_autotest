@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+tags:
+  - orders
+  - navigation
+---
+- runFlow:
+    file: ../_common/login_and_open_first_order.yaml
+- back
+- assertVisible:
+    text: "Lenta"
+    timeout: 5000
+- assertVisible: "Тип заявки"

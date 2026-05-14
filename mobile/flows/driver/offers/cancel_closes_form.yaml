@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+tags:
+  - offers
+  - navigation
+---
+- runFlow:
+    file: ../_common/login_and_open_first_order.yaml
+- tapOn: "Taklif yuborish"
+- assertVisible: "Taklif"
+- tapOn: "Bekor qilish"
+- assertNotVisible:
+    text: "Narx"
+    timeout: 3000
+- assertVisible: "Taklif yuborish"

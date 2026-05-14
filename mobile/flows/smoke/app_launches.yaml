@@ -5,5 +5,11 @@ tags:
 - launchApp:
     clearState: true
 - assertVisible:
-    text: ".*"
+    text: "Manzil"
     timeout: 10000
+- assertVisible: "Tizimga kirish"
+- assertVisible: "+998"
+- assertVisible: "Parol"
+- assertVisible: "Kirish"
+- assertVisible: "Parolni unutdingizmi"
+- assertVisible: "Ro'yxatdan o'tish"

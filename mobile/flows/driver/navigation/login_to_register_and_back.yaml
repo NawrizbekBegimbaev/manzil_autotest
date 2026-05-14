@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+tags:
+  - navigation
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Tizimga kirish"
+- tapOn: "Ro'yxatdan o'tish"
+- assertVisible:
+    text: "Xush kelibsiz"
+    timeout: 5000
+- assertVisible: "Tasdiqlash kodini olish uchun telefon raqamingizni kiriting"
+- tapOn:
+    text: "Kirish"
+    below: "Akkauntingiz bormi?"
+- assertVisible:
+    text: "Tizimga kirish"
+    timeout: 5000

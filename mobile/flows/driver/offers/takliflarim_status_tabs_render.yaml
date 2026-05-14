@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+tags:
+  - offers
+  - post-login
+---
+- runFlow:
+    file: ../_common/login_as_driver.yaml
+- tapOn: "Takliflarim"
+- assertVisible:
+    text: "Mening takliflarim"
+    timeout: 5000
+- assertVisible: "Barcha holatlar"
+- assertVisible: "Yangi"
+- assertVisible: "Ko'rib chiqilmoqda"

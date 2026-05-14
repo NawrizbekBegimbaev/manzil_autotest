@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+tags:
+  - registration
+---
+- launchApp:
+    clearState: true
+- tapOn: "Ro'yxatdan o'tish"
+- assertVisible: "Xush kelibsiz"
+- tapOn: "00 000 00 00"
+- inputText: "918744540"
+- hideKeyboard
+- tapOn: "Kirish"
+- assertNotVisible:
+    text: "Manzil"
+    timeout: 8000
+- assertNotVisible: "Xush kelibsiz"

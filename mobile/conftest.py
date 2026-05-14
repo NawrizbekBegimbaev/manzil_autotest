@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 import pytest
+from dotenv import load_dotenv
 from pluggy import Result
 
 from mobile.runner.maestro_runner import (
@@ -21,6 +22,8 @@ Platform = Literal["android", "ios"]
 MaestroCallable = Callable[[str, dict[str, str] | None], MaestroResult]
 
 FLOWS_DIR = Path(__file__).parent / "flows"
+
+load_dotenv()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -64,12 +67,16 @@ def maestro_env(platform: Platform) -> dict[str, str]:
             "APP_ID": os.environ.get("ANDROID_APP_ID", ""),
             "APP_PATH": os.environ.get("ANDROID_APP_PATH", ""),
             "DEVICE_ID": os.environ.get("ANDROID_DEVICE_ID", ""),
+            "DRIVER_FULL_NAME": os.environ.get("DRIVER_REAL_FULL_NAME", ""),
+            "DRIVER_PHONE_FULL": os.environ.get("DRIVER_REAL_PHONE", ""),
         }
     return {
         "APP_ID": os.environ.get("IOS_APP_ID", ""),
         "APP_PATH": os.environ.get("IOS_APP_PATH", ""),
         "DEVICE_NAME": os.environ.get("IOS_DEVICE_NAME", "iPhone 15"),
         "PLATFORM_VERSION": os.environ.get("IOS_PLATFORM_VERSION", "17.0"),
+        "DRIVER_FULL_NAME": os.environ.get("DRIVER_REAL_FULL_NAME", ""),
+        "DRIVER_PHONE_FULL": os.environ.get("DRIVER_REAL_PHONE", ""),
     }
 
 

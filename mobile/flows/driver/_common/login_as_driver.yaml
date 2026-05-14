@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- tapOn: "00 000 00 00"
+- inputText: ${DRIVER_PHONE_NO_PREFIX}
+- hideKeyboard
+- tapOn: "Parol"
+- inputText: ${DRIVER_PASSWORD}
+- hideKeyboard
+- tapOn: "Kirish"
+- assertVisible:
+    text: "Lenta"
+    timeout: 15000

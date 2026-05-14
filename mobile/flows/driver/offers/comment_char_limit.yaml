@@ -1,0 +1,13 @@
+appId: ${APP_ID}
+tags:
+  - offers
+  - validation
+---
+- runFlow:
+    file: ../_common/login_and_open_first_order.yaml
+- tapOn: "Taklif yuborish"
+- tapOn:
+    text: "Izoh"
+- inputText: "${LONG_TEXT}"
+- hideKeyboard
+- assertVisible: "Yuborish"
