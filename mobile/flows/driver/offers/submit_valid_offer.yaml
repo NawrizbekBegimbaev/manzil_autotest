@@ -8,14 +8,14 @@ tags:
     file: ../_common/login_and_open_first_order.yaml
 - tapOn: "Taklif yuborish"
 - assertVisible: "Taklif"
-- tapOn:
-    text: "Narx"
+- tapOn: "Masalan, 1 200"
 - inputText: "1500"
 - hideKeyboard
-- tapOn:
-    text: "Izoh"
+- tapOn: "Ixtiyoriy, 250 belgigacha"
 - inputText: "[E2E-W2] auto-probe offer"
 - hideKeyboard
 - tapOn: "Yuborish"
-- assertNotVisible:
-    text: "Narx"
+- extendedWaitUntil:
+    notVisible: "Masalan, 1 200"
+    timeout: 8000
+- assertNotVisible: "O'zgarishlar saqlanmaydi"
