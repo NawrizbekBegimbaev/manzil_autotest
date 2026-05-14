@@ -8,7 +8,6 @@ tags:
 - tapOn: "Profil"
 - assertVisible:
     text: ${DRIVER_FULL_NAME}
-    timeout: 5000
 - assertVisible: ${DRIVER_PHONE_FULL}
 - assertVisible: "Shaxsiy ma'lumotlar"
 - assertVisible: "To'liq ism"

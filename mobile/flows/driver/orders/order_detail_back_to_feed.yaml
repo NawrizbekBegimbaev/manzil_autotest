@@ -8,5 +8,4 @@ tags:
 - back
 - assertVisible:
     text: "Lenta"
-    timeout: 5000
 - assertVisible: "Тип заявки"

@@ -8,7 +8,6 @@ tags:
 - tapOn: "Takliflarim"
 - assertVisible:
     text: "Mening takliflarim"
-    timeout: 5000
 - assertVisible: "Barcha holatlar"
 - assertVisible: "Yangi"
 - assertVisible: "Ko'rib chiqilmoqda"

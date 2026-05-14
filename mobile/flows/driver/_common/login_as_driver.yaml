@@ -9,6 +9,6 @@ appId: ${APP_ID}
 - inputText: ${DRIVER_PASSWORD}
 - hideKeyboard
 - tapOn: "Kirish"
-- assertVisible:
-    text: "Lenta"
+- extendedWaitUntil:
+    visible: "Lenta"
     timeout: 15000

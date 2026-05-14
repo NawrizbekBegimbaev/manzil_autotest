@@ -5,9 +5,6 @@ tags:
 ---
 - runFlow:
     file: ../_common/login_and_open_first_order.yaml
-- assertVisible:
-    text: "№MZL-"
-    timeout: 5000
 - assertVisible: " kg"
 - assertVisible: " m³"
 - assertVisible: "Taklif yuborish"

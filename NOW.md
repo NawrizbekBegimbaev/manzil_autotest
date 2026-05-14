@@ -2,7 +2,7 @@
 
 > Project: `/Users/n.begimbayevgreatmall.uz/Documents/Manzil`
 > Stable info → `CLAUDE.md`. Этот файл — что меняется от сессии к сессии.
-> **Last updated:** 2026-05-14 (mobile Wave 1 spec готов, driver app проанализирован)
+> **Last updated:** 2026-05-14 (mobile Android прогон 16/20; iOS frozen waiting for simulator build)
 
 ---
 
@@ -96,7 +96,23 @@ Codex реализовал W2: order detail + submit offer + my-offer detail.
 
 Coverage после W2: ~20% от senior manual QA work (с 5-10% до W2).
 
-### Что нужно от пользователя для реального прогона W1+W2
+### Mobile реальный прогон Android — в работе 2026-05-14
+
+После 4 итераций фиксов (timeout / APP_ID env / locator ambiguity / data-coupled
+ассерты): **16/20 PASSED** на non-mutation. Codex отрабатывает `CODEX_MAESTRO_FIX_4.md`
+— ожидание 20/20 после следующей итерации.
+
+### iOS — заморожено 2026-05-14
+
+Real device через Maestro local требует Apple Developer аккаунт + WebDriverAgent
+сборка/подпись — не подходит для QA-workflow. Diawi `.ipa` подписан для real device,
+не работает на simulator.
+
+**Ожидаем от mobile-команды:** `manzil-driver.app` собранный с `sdk=iphonesimulator`
+(а не Diawi `.ipa`). После получения — `xcrun simctl install booted Manzil.app`,
+заполнение `IOS_APP_ID`+`IOS_APP_PATH` в `.env`, прогон работает на симуляторе.
+
+### Что нужно от пользователя для расширения mobile coverage
 
 В `.env` заполнить (см. `.env.example`):
 ```

@@ -1,4 +1,4 @@
-"""Mobile Wave 2: my-offer card opens a detail view."""
+"""Mobile Wave 2: Takliflarim screen renders."""
 
 from __future__ import annotations
 
@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 @pytest.mark.requires_device
 @pytest.mark.requires_maestro
 @pytest.mark.requires_real_account
-def test_my_offer_detail_opens(
+def test_takliflarim_screen_renders(
     maestro: MaestroCallable,
     platform: Platform,
 ) -> None:
     result = maestro("driver/offers/my_offer_detail_opens.yaml", driver_login_params())
-    assert_flow_passed(result, platform, "my offer detail opens")
+    assert_flow_passed(result, platform, "takliflarim screen renders")

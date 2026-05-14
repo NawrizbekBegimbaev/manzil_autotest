@@ -8,7 +8,6 @@ tags:
 - tapOn: "Taklif yuborish"
 - assertVisible:
     text: "Taklif"
-    timeout: 5000
 - assertVisible: "Narx"
 - assertVisible: "Izoh"
 - assertVisible: "Masalan, 1 200"

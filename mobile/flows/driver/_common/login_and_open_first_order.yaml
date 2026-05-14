@@ -2,11 +2,11 @@ appId: ${APP_ID}
 ---
 - runFlow:
     file: login_as_driver.yaml
-- assertVisible:
-    text: "Lenta"
+- extendedWaitUntil:
+    visible: "Lenta"
     timeout: 15000
 - assertVisible: "Тип заявки"
 - tapOn: "Тип заявки"
-- assertVisible:
-    text: "Taklif yuborish"
+- extendedWaitUntil:
+    visible: "Taklif yuborish"
     timeout: 8000

@@ -9,14 +9,11 @@ tags:
 - tapOn: "Takliflarim"
 - assertVisible:
     text: "Mening takliflarim"
-    timeout: 5000
 - assertVisible: "Barcha holatlar"
 - tapOn: "Profil"
 - assertVisible:
     text: "Profil"
-    timeout: 5000
 - assertVisible: ${DRIVER_FULL_NAME}
 - tapOn: "Lenta"
 - assertVisible:
     text: "Lenta"
-    timeout: 5000

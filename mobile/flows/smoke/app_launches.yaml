@@ -4,8 +4,8 @@ tags:
 ---
 - launchApp:
     clearState: true
-- assertVisible:
-    text: "Manzil"
+- extendedWaitUntil:
+    visible: "Manzil"
     timeout: 10000
 - assertVisible: "Tizimga kirish"
 - assertVisible: "+998"

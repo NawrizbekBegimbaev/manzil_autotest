@@ -7,6 +7,5 @@ tags:
     file: ../_common/login_as_driver.yaml
 - assertVisible:
     text: "Lenta"
-    timeout: 5000
 - assertVisible: "Тип заявки"
 - assertVisible: "Локация"

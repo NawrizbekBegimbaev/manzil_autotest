@@ -9,4 +9,3 @@ tags:
 - tapOn: "Kirish"
 - assertVisible:
     text: "Tizimga kirish"
-    timeout: 3000

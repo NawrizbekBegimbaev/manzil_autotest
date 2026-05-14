@@ -10,4 +10,3 @@ tags:
 - tapOn: "Yangi"
 - assertVisible:
     text: "Yangi"
-    timeout: 3000

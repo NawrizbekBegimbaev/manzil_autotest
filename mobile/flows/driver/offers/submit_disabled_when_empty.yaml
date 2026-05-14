@@ -10,5 +10,4 @@ tags:
 - tapOn: "Yuborish"
 - assertVisible:
     text: "Taklif"
-    timeout: 3000
 - assertVisible: "Narx"

@@ -10,7 +10,9 @@ tags:
 - inputText: "918744540"
 - hideKeyboard
 - tapOn: "Kirish"
-- assertNotVisible:
-    text: "Manzil"
-    timeout: 8000
-- assertNotVisible: "Xush kelibsiz"
+- extendedWaitUntil:
+    notVisible: "Xush kelibsiz"
+    timeout: 10000
+- extendedWaitUntil:
+    notVisible: "Tasdiqlash kodini olish uchun telefon raqamingizni kiriting"
+    timeout: 5000

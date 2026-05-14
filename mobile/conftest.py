@@ -86,7 +86,8 @@ def maestro(maestro_env: dict[str, str], platform: Platform) -> MaestroCallable:
 
     def _run(flow_rel_path: str, params: dict[str, str] | None = None) -> MaestroResult:
         flow_path = FLOWS_DIR / flow_rel_path
-        return run_flow(flow_path, params=params, env=maestro_env, platform=platform)
+        merged_params = {**maestro_env, **(params or {})}
+        return run_flow(flow_path, params=merged_params, platform=platform)
 
     return _run
 

@@ -10,5 +10,4 @@ tags:
 - tapOn: "Bekor qilish"
 - assertNotVisible:
     text: "Narx"
-    timeout: 3000
 - assertVisible: "Taklif yuborish"
