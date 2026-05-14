@@ -2,7 +2,7 @@
 
 > Project: `/Users/n.begimbayevgreatmall.uz/Documents/Manzil`
 > Stable info → `CLAUDE.md`. Этот файл — что меняется от сессии к сессии.
-> **Last updated:** 2026-05-14 (mobile Android прогон 16/20; iOS frozen waiting for simulator build)
+> **Last updated:** 2026-05-14 (W3 done — Android 29/29 passing, ~30% coverage, 9 commits)
 
 ---
 
@@ -64,6 +64,19 @@ appId + тестовые аккаунты. См. секцию "Phase 1+" в `COD
 Bug.txt обновлён: closed-секция дополнена, в open-секциях BUG-004/008/010
 помечены `[CLOSED 2026-05-13]`, Q4/Q6 backend-questions обновлены.
 
+### Куда продолжать в следующей сессии
+
+| Wave | Что | Поднимет coverage | Блокер |
+|---|---|---|---|
+| **W4** | Negative paths + edge cases + RBAC + i18n full | 30% → 40% (bug-finding power) | — |
+| W5 | Driver registration end-to-end | 40% → 45% | **Telegram OTP backend ask** (N4) |
+| W6 | iOS parity | 45% → 50% | **iOS simulator-build** (BACKEND_ASKS) |
+| W7 | Performance + accessibility | 50% → 55% | весь предыдущий покрытие |
+
+Также cleanup-сюжет: dev backend накопил `[E2E-PROBE]`, `[E2E-W2]` orders
++ изменения в driver profile (city = "Toshkent" вместо "Nawrizbek_20").
+Когда-нибудь нужен maintenance-тест чистки.
+
 ### Что следующее (на Codex'а сейчас)
 
 ### Mobile Wave 1 ✅ выполнен 2026-05-14 (см. W2 секцию выше)
@@ -96,11 +109,18 @@ Codex реализовал W2: order detail + submit offer + my-offer detail.
 
 Coverage после W2: ~20% от senior manual QA work (с 5-10% до W2).
 
-### Mobile реальный прогон Android — в работе 2026-05-14
+### Mobile Android ✅ 29/29 passing 2026-05-14
 
-После 4 итераций фиксов (timeout / APP_ID env / locator ambiguity / data-coupled
-ассерты): **16/20 PASSED** на non-mutation. Codex отрабатывает `CODEX_MAESTRO_FIX_4.md`
-— ожидание 20/20 после следующей итерации.
+После 5 итераций фиксов на реальном Pixel-эмуляторе:
+- **W1+W2 (21 теста):** smoke, login, navigation, post-login tabs, profile read,
+  feed render, takliflarim, order detail, submit offer (1 mutation creating
+  real offer on dev backend)
+- **W3 (8 тестов):** profile sections, edit form, save disabled, back nav,
+  date picker, edit name/city/vehicle (3 mutation)
+
+Total Android tests passing: **29/29**. iOS tests skip (ждём simulator build).
+
+**Coverage: ~30% от senior manual QA work** (5% старт сессии → 30% после W3).
 
 ### iOS — заморожено 2026-05-14
 
