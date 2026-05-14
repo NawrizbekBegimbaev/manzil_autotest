@@ -14,8 +14,34 @@ CLOSED (verified 2026-05-12 by full pytest run)
 Тесты, которые это подтверждают, теперь без xfail; следующий прогон должен
 показать их в passed без xpassed.
 
+================================================================================
+CLOSED (verified 2026-05-13 by BRD §4 E2E run × 2 retries, 27s each)
+================================================================================
+- BUG-004: SUPPLIER_ADMIN получает 403 на POST /orders/{id}/offers/{id}/select.
+  Закрыто — E2E шаг 12 (Supplier выбирает победителя) проходит. Backend починил
+  RBAC, ADMIN теперь имеет право выбирать победителя как по матрице BRD §3.
+- BUG-008 (P0): TK_ADMIN JWT отвергался с 401 на /me, /my-offers, /feed.
+  Закрыто — E2E шаг 8 (TK видит заявку в /feed) проходит. JWT принимается,
+  TK получает полный список feed-заявок.
+- BUG-010: TK web-registration OTP email не приходил в Gmail IMAP за 180s.
+  Закрыто как non-reproducible — single flake одного прогона. На двух
+  последующих retry письмо приходит за <30s каждый раз, весь E2E
+  отрабатывает за 27 секунд.
+
+BUG-007 (TK /offers крашится 404 на оффер удалённой заявки) разблокирован
+после закрытия BUG-008 — нужна отдельная верификация UI-сценария.
+
+================================================================================
+CLOSED (verified 2026-05-13 by /tmp/probe_all_bugs.py)
+================================================================================
+- BUG-009: cross-flow phone Supplier→TK теперь возвращает 409 «Пользователь
+  с таким номером телефона уже существует». Закрыто.
+
+Также пере-верифицировано (по-прежнему открыто): BUG-001, BUG-002.
+Существенно изменилось: BUG-003 (см. ниже — направление дрифта поменялось).
+
 Дата обнаружения:   2026-04-30 (initial)
-Re-verified:        2026-05-05 (current dev backend + UI)
+Re-verified:        2026-05-13 (probe + E2E run)
 Окружение:          dev (architecture: same-origin)
                     API + UI:   https://dev-manzil.greatmall.uz
                     Swagger UI: https://dev-manzil.greatmall.uz/swagger-ui
@@ -28,8 +54,15 @@ HTTP-клиент:        httpx 0.27 (Python 3.13), JSON over TLS 1.3
 Обнаружено:         Автоматизированный API/UI test suite
                     (pytest + httpx + pydantic v2 + Playwright).
 
-Этот файл содержит ТОЛЬКО баги, которые подтверждены как открытые на
-2026-05-05. Закрытые ранее баги удалены из документа.
+Этот файл содержит ТОЛЬКО открытые баги. Закрытые удалены из тела документа
+(их короткая история сохранена в верхних CLOSED-секциях). Номера НЕ
+переиспользуются — gaps в нумерации (BUG-004, BUG-008, BUG-010 отсутствуют)
+это норма, как в Jira/Linear; legacy-ссылки в xfail-сообщениях кода остаются
+валидными.
+
+Текущие открытые: BUG-001, -002, -003, -005, -006, -007 (6 шт).
+Re-verified open 2026-05-13: BUG-001, BUG-002, BUG-003, BUG-005, BUG-007.
+Не верифицировано: BUG-006 (требует Playwright).
 
 
 ================================================================================
@@ -116,78 +149,48 @@ Priority:           P2
 
 
 ================================================================================
-BUG-003: UI принимает ИНН только 8–18 символов, API — 1–18 (контракт-дрифт)
+BUG-003: Контракт-дрифт ИНН UI ↔ API (направление поменялось 2026-05-13)
 ================================================================================
 
-Severity:           Major (UI блокирует валидные с точки зрения API данные)
+Severity:           Major (UI может пропустить ИНН, который backend отвергнет)
 Priority:           P1
-Компонент:          Frontend (форма регистрации Supplier/TK)
+Компонент:          Frontend + Swagger (контракт-документация)
+Re-verified:        2026-05-13 (/tmp/probe_all_bugs.py)
 
-Описание:
-    На /auth/register/supplier и /auth/register/tk форма блокирует submit
-    при длине ИНН < 8.
+Текущее состояние (verified 2026-05-13):
+    API принимает **только TIN длиной 12 символов**. Любое другое
+    значение (1, 5, 7, 8, 18, 19 — пробовали) → 400 Bad Request.
+    UI всё ещё валидирует диапазон 8–18.
 
-    Бэкенд по swagger принимает паттерн `^[0-9]{1,18}$` — т.е. от 1 цифры.
-    Расхождение: пользователь, у которого валидный по API ИНН 5–7 цифр
-    (теоретический edge — в РУз стандарт 9, но другие страны могут
-    отличаться), не сможет завершить регистрацию через UI.
+    То есть направление дрифта **поменялось**: раньше UI был уже API
+    (UI 8-18 vs API 1-18), теперь UI шире API (UI 8-18 vs API ровно 12).
 
-    Re-recon 2026-05-05: текст ошибки изменён («Только цифры» вместо
-    «ИНН от 8 до 18 символов»), но drift сохранился — UI всё ещё
-    отклоняет 5-цифр ИНН.
+Новое следствие:
+    Пользователь с TIN 8-11 или 13-18 цифр пройдёт UI-валидацию, отправит
+    форму, получит 400 «Неверный запрос» от бекенда. Сообщение об ошибке
+    generic, не указывает на поле tin.
 
-Шаги:
-    1. Открыть https://dev-manzil.greatmall.uz/auth/register/supplier
-    2. В поле «ИНН / аналог» ввести `12345`
-    3. Заполнить остальные поля валидно
-    4. Нажать «Зарегистрироваться»
-
-Ожидание:  submit принят, переход на экран OTP (поведение API).
-Факт:      Inline-ошибка «Только цифры» (на 5 цифрах!), кнопка не
-           отправляет запрос на бэк.
-
-Доказательство:
-    - web_ui/supplier/auth/test_pre_otp_register.py
-    - Playwright probe 2026-05-05: TIN=12345 → form blocks submit.
+Swagger требуется обновить:
+    Старый паттерн `^[0-9]{1,18}$` больше не отражает реальность.
+    Должно быть `^[0-9]{12}$`.
 
 Рекомендация:
-    Согласовать диапазон с командой бэка:
-    - расширить UI-правило до 1–18 (соответствует swagger), или
-    - сузить swagger-регулярку до `^[0-9]{8,18}$` и обновить контракт.
+    1. Backend: оставить как есть (12 — стандарт UZ ИНН).
+    2. UI: сузить валидацию формы до ровно 12 цифр, добавить
+       contextual error «ИНН должен содержать ровно 12 цифр».
+    3. Swagger: обновить `tin` pattern на `^[0-9]{12}$`.
+
+Доказательство:
+    - /tmp/probe_all_bugs.py BUG-003 (probe 2026-05-13):
+      Accepted lengths: [12]
+      Rejected lengths: [1, 5, 7, 8, 18, 19] (все 400)
+    - web_ui/supplier/auth/test_pre_otp_register.py — UI блокирует submit < 8
+
+Old description (kept for traceability):
+    На /auth/register/supplier UI блокировал submit при длине ИНН < 8.
+    Backend по swagger принимал `^[0-9]{1,18}$`. Re-recon 2026-05-05: drift
+    сохранялся (UI 8-18 vs API 1-18).
     Сейчас два слоя противоречат друг другу.
-
-
-================================================================================
-BUG-004: POST /orders/{id}/offers/{id}/select возвращает 403 для SUPPLIER_ADMIN
-================================================================================
-
-Severity:           Major (нарушение матрицы прав)
-Priority:           P1
-Компонент:          Backend (RBAC на /select endpoint)
-
-Описание:
-    Согласно матрице (BRD §3, ролевая таблица «Предложения») оба
-    SUPPLIER_ADMIN и SUPPLIER_MANAGER имеют право «Выбрать
-    победителя». В реальности только MANAGER может вызвать
-    POST /api/v1/orders/{orderId}/offers/{offerId}/select — ADMIN
-    получает 403 Forbidden.
-
-Шаги:
-    1. Логин как SUPPLIER_ADMIN, получить access_token.
-    2. POST /api/v1/orders/{id}/offers/{offerId}/select от имени admin.
-    3. Backend → 403 Forbidden.
-
-Ожидание: 200 OK + обновлённый OrderResponse со status=in_progress.
-Факт:     403 Forbidden (re-verified 2026-05-05).
-
-Доказательство:
-    - web_ui/e2e/test_tender_flow_cross_role.py
-    - /tmp/bug_probe.py BUG-015: 403 confirmed.
-
-Рекомендация:
-    Либо открыть ADMIN endpoint /select (выровнять с матрицей), либо
-    обновить матрицу до «только MANAGER может выбрать победителя» и
-    отразить это в UI (скрыть кнопку у ADMIN).
 
 
 ================================================================================
@@ -197,6 +200,10 @@ BUG-005: MZL-номера заявок не уникальны глобальн�
 Severity:           Minor (UX неоднозначность)
 Priority:           P3
 Компонент:          Backend (нумерация заявок)
+Re-verified:        2026-05-13 (/tmp/probe_remaining_bugs.py BUG-005)
+                    Probe создал 2 ордера в 2 разных компаниях, оба получили
+                    'MZL-0001'. Подтверждено что бекенд использует per-company
+                    sequence, не глобальный.
 
 Описание:
     MZL-номер (MZL-NNNN) генерируется per-company (счётчик у каждого
@@ -274,178 +281,63 @@ BUG-007: TK /offers ломается на «404 Заявка не найдена
          удалённую/отменённую заявку
 ================================================================================
 
-Severity:           Major (страница недоступна)
+Severity:           Major (страница недоступна для пользователя)
 Priority:           P1
-Компонент:          Frontend (TK /offers + backend offer-listing)
+Компонент:          **Frontend only** (verified 2026-05-13)
+Re-verified:        2026-05-13 (/tmp/probe_remaining_bugs.py BUG-007)
 
-Описание:
-    После прогонов cross-role e2e тестов остаются закрытые (cancelled)
-    заявки, к которым ранее были приcлeлы офферы от TK. На странице
-    /offers (history of TK's outgoing offers) фронт пытается отрендерить
-    карточку оффера, фетчит данные связанной заявки, получает 404 и
-    показывает страницу «Ошибка (404). Заявка не найдена. [Повторить]
-    [На главную]» вместо списка офферов.
+Состояние backend (verified 2026-05-13):
+    GET /api/v1/my-offers возвращает **200** с paginated content. В items
+    есть нужные поля для рендеринга, включая `orderStatus` (CANCELLED для
+    отменённых заявок) — фронт может узнать состояние не делая отдельный
+    запрос за заявкой.
 
-    То есть один «битый» оффер ломает ВСЮ страницу /offers — нет fallback
-    «пропустить эту строку» или «показать как удалённую».
+    Probe-результат:
+        HTTP 200
+        items[0] = {
+            "id": "<offer-uuid>",
+            "status": "NOT_SELECTED",     # backend автоматически сменил
+            "orderStatus": "CANCELLED",   # денормализован в response
+            ...
+        }
 
-    NB: на 2026-05-05 проверка precondition заблокирована — TK_ADMIN
-    JWT отвергается на /api/v1/my-offers (см. BUG-008).
+    То есть backend полностью даёт фронту нужное чтобы НЕ падать. Это
+    100% frontend bug.
 
-Шаги воспроизведения (когда BUG-008 исправлен):
+Шаги воспроизведения (UI):
     1. TK подаёт оффер на заявку поставщика
-    2. Поставщик отменяет заявку (status=CANCELLED)
+    2. Поставщик-admin отменяет заявку (status=CANCELLED)
     3. TK открывает /offers
-    4. Страница показывает 404, не таблицу
+    4. Страница показывает «404. Заявка не найдена» вместо таблицы
 
 Доказательство:
-    - GET /api/v1/my-offers → 200 с массивом офферов (включая со
-      SELECTED-статусом) — was working before BUG-008
-    - UI на /offers рендерит «Ошибка (404). Заявка не найдена» вместо
-      таблицы.
+    - /tmp/probe_remaining_bugs.py BUG-007: API даёт 200 + полные данные
+    - UI на /offers рендерит 404 (frontend fetch'ит каждую заявку отдельно
+      и не обрабатывает 404)
 
 Рекомендация:
-    Frontend: не падать на 404 связанной заявки — показывать строку с
-    плейсхолдером «Заявка удалена/отменена» (offerData всё ещё валидно).
-    Backend: либо включать в /my-offers денормализованные поля заявки,
-    либо явно фильтровать офферы на отменённые заявки на бэке.
+    Frontend: не делать отдельный fetch заявки в /offers рендере. Использовать
+    `orderStatus` поле из my-offers response. Если оно `CANCELLED` —
+    показывать строку с серым плейсхолдером «Заявка отменена», offer
+    данные всё ещё валидны.
+
+    Backend часть работы — уже сделана (`orderStatus` денормализован).
 
 
-================================================================================
-BUG-008: TK_ADMIN JWT отвергается с 401 на /me, /my-offers, /feed (NEW)
-================================================================================
-
-Severity:           Critical (TK не может пользоваться приложением)
-Priority:           P0
-Компонент:          Backend (Spring Security / JWT validation для TK ролей)
-
-Описание:
-    POST /api/v1/auth/web/login для TK админа возвращает 200 с валидным JWT
-    (iss=manzil-dev, realm_access.roles=['TK_ADMIN']). Однако:
-        GET /api/v1/me           → 401 «Требуется авторизация»
-        GET /api/v1/my-offers    → 401
-        GET /api/v1/feed         → 401
-        GET /api/v1/orders       → 403 (ожидаемо — TK не должен видеть)
-    SUPPLIER_ADMIN с тем же realm/issuer на /me → 200.
-
-    То есть TK login видимо проходит (storage_state сохраняется), но
-    любая страница приложения для TK сломана — каждый запрос к API
-    возвращает 401.
-
-Шаги воспроизведения:
-    POST /api/v1/auth/web/login {"email": "<tk_admin>", "password": "..."}
-    GET  /api/v1/me с Authorization: Bearer <accessToken>
-
-Ожидаемый: 200 + UserResponse с ролью TK_ADMIN.
-Фактический: 401 «Требуется авторизация».
-
-Доказательство:
-    - Прямая проба 2026-05-05: оба токена (TK + SUPPLIER_ADMIN) валидны
-      по JWT-формату, оба issued тем же realm `manzil-dev`. /me для
-      SUPPLIER → 200, для TK → 401.
-    - JWT payload TK: realm_access.roles=['TK_ADMIN', 'default-roles-manzil',
-      'offline_access', 'uma_authorization'].
-
-Влияние:
-    1. TK не может загрузить ни одну страницу приложения.
-    2. Блокирует verifying BUG-007 (orphan offer на 404 заявку) — основной
-       precondition недоступен.
-    3. Регрессия: до 2026-04-30 TK login был рабочим (см. tests/auth/
-       test_web_login.py — тест logged-in TK).
-
-Рекомендация:
-    1. Проверить Spring Security конфигурацию: какие realm-роли
-       разрешены на /api/v1/me, /my-offers, /feed.
-    2. Если конфиг whitelisting'ит только SUPPLIER_*-роли — добавить
-       TK_ADMIN, TK_DRIVER в список разрешённых.
-    3. Добавить интеграционный тест: TK_ADMIN JWT → /me → 200.
-
-
-================================================================================
-BUG-009: Регистрация позволяет создать 2 аккаунта на один и тот же номер телефона
-================================================================================
-
-Severity:           Major (нарушение бизнес-инварианта уникальности)
-Priority:           P1
-Компонент:          Backend (auth-module — отсутствует/сломана уникальность
-                    phone в registration flow)
-Обнаружено:         2026-05-06 (manual repro)
-
-Описание:
-    Backend принимает второй POST на регистрацию с тем же phone и создаёт
-    второй аккаунт вместо того чтобы вернуть 409 Conflict. На один номер
-    телефона можно зарегистрировать 2 разных аккаунта — что нарушает
-    бизнес-инвариант (телефон должен однозначно идентифицировать
-    пользователя/компанию для OTP, recovery, mobile login).
-
-    NB: BUG-001 ранее упоминал, что «дубль phone в /suppliers даёт 409».
-    Сейчас это не подтверждается — либо регрессия в /suppliers, либо
-    проверка отсутствует в смежном flow (TK / mobile/driver / web-invite).
-    Нужно прогнать дубль-phone репро по всем flow:
-        - POST /api/v1/auth/web/registrations/suppliers
-        - POST /api/v1/auth/web/registrations/trucking-companies
-        - POST /api/v1/auth/mobile/registrations/drivers
-        - POST /api/v1/employees (invite — по идее phone не обязателен,
-          но проверить если поле принимается)
-
-    По swagger-контракту 409 «Phone already registered» должен возвращаться
-    при дубле phone (аналогично email/TIN — те уже enforce'ятся).
-
-Шаги воспроизведения:
-    1. POST /api/v1/auth/web/registrations/suppliers
-       {"email":"a@manziltest.uz", "tin":"200111000001",
-        "phone":"+998900000099", ...} → 204
-    2. POST /api/v1/auth/web/registrations/suppliers
-       {"email":"b@manziltest.uz", "tin":"200111000002",
-        "phone":"+998900000099", ...}   ← тот же phone, другой email/TIN
-
-Ожидаемый: Шаг 2 → 409 Conflict
-           ProblemDetail.title="Phone already registered"
-Фактический: Шаг 2 → 204 No Content (создаётся второй аккаунт на тот же
-             номер, оба получают OTP / могут довести регистрацию до конца).
-
-Влияние:
-    1. Mobile login по phone становится неоднозначным — какой аккаунт
-       аутентифицировать?
-    2. SMS/Telegram OTP на recovery/verify уходит на чужой номер (если
-       один и тот же phone у двух пользователей — кто получает код?).
-    3. Account takeover risk: злоумышленник регистрирует второй аккаунт
-       на телефон жертвы, перехватывает OTP и получает доступ.
-    4. Нарушает обещанный swagger-контракт (409 для phone duplicates).
-
-Доказательство:
-    - manual repro 2026-05-06 (см. описание шагов выше)
-    - TODO: добавить тест tests/auth/test_web_register_supplier.py::
-        test_register_supplier_with_duplicate_phone_returns_409
-      (сейчас, вероятно, отсутствует или падает — нужно проверить)
-
-Рекомендация:
-    1. Добавить (или починить) UNIQUE-constraint / SELECT-проверку по phone
-       в registration-сервисе для всех flow (suppliers, trucking-companies,
-       drivers).
-    2. Возвращать 409 Conflict с ProblemDetail.detail указывающим на phone.
-    3. Решить, нормализовать ли phone до E.164 ДО проверки (иначе
-       «+998 90 000 00 99» и «+998900000099» считаются разными).
-    4. Добавить регрессионный тест на каждый из перечисленных flow.
-
-Связанные баги:
-    - BUG-001 (дубль email в /suppliers → 204 вместо 409) — тот же класс
-      проблемы (отсутствие uniqueness в registration), но для email.
+[Полное описание BUG-009 удалено 2026-05-13 — баг закрыт. Короткая запись в
+верхней CLOSED-секции; см. probe в /tmp/probe_all_bugs.py.]
 
 
 ================================================================================
 Сводка
 ================================================================================
 
-BUG-001  Major      P1   Дубль email в /suppliers возвращает 204 вместо 409
-BUG-002  Minor      P2   Swagger UI за oauth2-proxy в realm `grafana`
-BUG-003  Major      P1   UI принимает ИНН 8–18, API 1–18 — контракт-дрифт
-BUG-004  Major      P1   /offers/{id}/select → 403 для SUPPLIER_ADMIN (матрица обещает ✅)
-BUG-005  Minor      P3   MZL-номера не уникальны глобально (per-company seq)
-BUG-006  Major      P1   На «В работе» заявке UI не показывает Завершить/Отменить/Выбрать победителя
-BUG-007  Major      P1   TK /offers ломается на 404, если оффер на удалённую заявку (blocked by BUG-008)
-BUG-008  Critical   P0   TK_ADMIN JWT → 401 на /me, /my-offers, /feed (NEW, regression)
-BUG-009  Major      P1   Дубль phone при регистрации — создаётся 2 аккаунта на 1 номер (NEW)
+BUG-001  Major      P1   Дубль email в /suppliers возвращает 204 вместо 409 — re-verified open 2026-05-13
+BUG-002  Minor      P2   Swagger UI за oauth2-proxy (теперь /oauth2/start) — re-verified open 2026-05-13
+BUG-003  Major      P1   ИНН: API теперь требует ровно 12, UI всё ещё 8-18 — direction changed (re-verified 2026-05-13)
+BUG-005  Minor      P3   MZL-номера не уникальны cross-company (per-company seq) — re-verified open 2026-05-13
+BUG-006  Major      P1   UI не показывает action-кнопки на «В работе» — не верифицирован (требует Playwright)
+BUG-007  Major      P1   TK /offers 404 — Frontend-only (API дал backend часть, orderStatus в response) — re-verified 2026-05-13
 
 
 ================================================================================
@@ -463,7 +355,19 @@ Q3.  Можно ли получить заголовок типа X-Test-Clock �
 
 Q4.  BUG-008: была ли TK_ADMIN роль удалена из allow-list какого-то
      SecurityFilter недавно? Какой commit / change request это сделал?
+     [Возможно резолвед — BUG-008 закрыт 2026-05-13. Если backend знает что
+      именно правил — задокументировать для постмортема.]
 
-Q5.  BUG-009: phone uniqueness — должен ли он enforce'иться cross-flow
-     (supplier vs TK vs driver) или per-flow? Нужна нормализация номера
-     до E.164 до проверки, или backend уже это делает?
+Q5.  ~~BUG-009 phone uniqueness~~ — закрыто 2026-05-13 (cross-flow Supplier→TK
+     возвращает 409 "уже существует").
+
+Q7.  POST /api/v1/orders/{id}/cancel: SUPPLIER_DISPATCHER получает 409
+     "error.order.not-cancellable" если у order'а есть active offer, но
+     SUPPLIER_ADMIN отменяет успешно. По BRD §3 — это feature (admin override)
+     или непрописанный RBAC bug? Найдено в /tmp/probe_remaining_bugs.py
+     2026-05-13.
+
+Q6.  BUG-010 закрыт как non-repro flake. Но **Telegram OTP** для mobile-driver
+     registration всё ещё блокирует ~3 теста. Просьба: dev-only endpoint
+     `GET /dev/last-otp/{phone}` (или фиксированный код для тест-номеров).
+     См. `CODEX_NEXT.md` N4 / Q3 (Telegram OTP в CLAUDE.md).

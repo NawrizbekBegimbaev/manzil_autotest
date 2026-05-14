@@ -2,7 +2,7 @@
 
 > Project: `/Users/n.begimbayevgreatmall.uz/Documents/Manzil`
 > Stable info → `CLAUDE.md`. Этот файл — что меняется от сессии к сессии.
-> **Last updated:** 2026-05-13 (API-сьют стабилизирован, V2 закрыт)
+> **Last updated:** 2026-05-14 (mobile Wave 1 spec готов, driver app проанализирован)
 
 ---
 
@@ -51,27 +51,104 @@ appId + тестовые аккаунты. См. секцию "Phase 1+" в `COD
 Спеки V1 и V2 удалены (правки закоммичены в коде, закрытые баги — в `bug.txt` closed-секции).
 Лог последнего прогона: `/private/tmp/manzil_run_after_v2.log`.
 
+### 🎉 BRD §4 E2E — GREEN 2026-05-13
+
+После N3 probe (первый запуск упал на IMAP-flake) Claude сделал 2 retry —
+**оба зелёные, по 27 секунд каждый**. Все 13 шагов tender-flow проходят.
+
+Это значит **3 бага закрыты на backend'е**:
+- **BUG-008** (P0 — TK_ADMIN JWT 401 на /feed) — шаг 8 проходит.
+- **BUG-004** (P1 — SUPPLIER_ADMIN 403 на selectWinner) — шаг 12 проходит.
+- **BUG-010** (TK OTP IMAP timeout) — non-reproducible, был одноразовый flake.
+
+Bug.txt обновлён: closed-секция дополнена, в open-секциях BUG-004/008/010
+помечены `[CLOSED 2026-05-13]`, Q4/Q6 backend-questions обновлены.
+
 ### Что следующее (на Codex'а сейчас)
 
-**Активное:**
-- **`CODEX_COMMIT.md` (N1)** — initial git commit (4 атомарных). Precheck
-  зелёный. Не зависит от mobile.
+### Mobile Wave 1 ✅ выполнен 2026-05-14 (см. W2 секцию выше)
 
-**Ждёт пользователя:**
-- **`CODEX_MOBILE.md` Wave 1** — driver registration. Нужны APK/IPA на ноуте,
-  потом Claude анализирует и пишет спеку.
+Wave 1 details below kept for traceability — реализация в коде уже.
+
+
+
+Codex реализовал инфраструктуру + 12 flow / 24 теста (Android+iOS параметризация):
+login (positive/negative/disabled), nav (register, forgot), register Step 1,
+post-login tabs, profile, language toggle, takliflarim, feed.
+
+Проверки: ruff/mypy зелёные, `pytest mobile/ --collect-only` → 24. Все
+скипаются без `ANDROID_APP_PATH/IOS_APP_PATH` (ожидаемое).
+
+**`BACKEND_ASKS.md`** заведён, первая запись: frontend ask про
+testTag/accessibilityIdentifier.
+
+### Mobile Wave 2 ✅ выполнен 2026-05-14
+
+Codex реализовал W2: order detail + submit offer + my-offer detail.
+- Maestro flows: order_detail render/back, submit form opens/disabled/cancel,
+  submit_valid (mutation), comment limit, my-offer detail, Takliflarim filter
+- `mobile/seed/api_seed.py`: `seed_active_order_for_driver_feed` для precondition
+- pytest wrappers в `mobile/tests/driver/orders/` и `.../offers/`
+- Маркер `mutation` добавлен в pytest.ini
+
+Проверки: ruff/mypy зелёные, `pytest mobile/ --collect-only` → **42 теста**
+(24 W1 + 18 W2). Реальный прогон на эмуляторе не делался — требует device + env.
+
+Coverage после W2: ~20% от senior manual QA work (с 5-10% до W2).
+
+### Что нужно от пользователя для реального прогона W1+W2
+
+В `.env` заполнить (см. `.env.example`):
+```
+ANDROID_APP_PATH=/полный/путь/к/manzil-driver.apk
+ANDROID_APP_ID=uz.greatmall.manzil.dev
+DRIVER_REAL_PHONE=+998918744540
+DRIVER_REAL_PASSWORD=Nawrizbek_20
+DRIVER_REAL_FULL_NAME=Naurizbek Mambetali uli Begimbaev
+```
+
+Запустить эмулятор + установить приложение, потом:
+```bash
+pytest mobile/ -k android -v          # ~5 мин на 12 тестов
+```
+
+Для iOS — установить `Manzil.app` в симулятор, заполнить `IOS_APP_PATH` +
+`IOS_APP_ID` (вытащить через `plutil -p Manzil.app/Info.plist`).
+
+**Anomaly to verify (низкий приоритет):**
+- Profile «Shahar» (город) на тестовом driver-аккаунте показывает
+  `Nawrizbek_20` — совпадает с паролем. Либо случайно ввели, либо
+  backend mapping bug. Расследовать позже.
+
+**Желательно (не срочно):**
+- **Верифицировать BUG-007** — он был заблокирован BUG-008, теперь разблокирован.
+  Нужен UI-сценарий: TK подаёт оффер → Supplier отменяет → TK открывает /offers,
+  смотрим 404 или нормальный список.
+- **Сделать 5-й коммит** с накопившимися изменениями (`D CODEX_COMMIT.md`,
+  bug.txt + NOW.md обновления после E2E зелёного). Содержание ясно — можно
+  поручить Codex'у.
+
+**Заблокировано backend'ом:**
+- **`CODEX_NEXT.md` N4** — Telegram OTP. Ждёт backend-договорённости о dev-endpoint.
 
 **Закрыто 2026-05-13:**
 - ~~`CODEX_CI.md` (N2)~~ — 3 workflow + README.
 - ~~`CODEX_LINT_FIX.md`~~ — 6 ruff + 257 mypy → 0/0.
-- ~~`CODEX_MOBILE.md` Wave 0~~ — Maestro инфра. `mobile/` структура,
-  `runner`, `conftest`, smoke + README. 2 теста собираются, skip без env.
+- ~~`CODEX_MOBILE.md` Wave 0~~ — Maestro инфра.
+- ~~`CODEX_COMMIT.md` (N1)~~ — 4 атомарных коммита, 216 файлов.
+- ~~`CODEX_NEXT.md` N3~~ — E2E зелёный 2/2 retries (27s каждый).
 
-**После N1 — E2E:**
-- **`CODEX_NEXT.md` N3** — BRD §4 E2E верификация (изолированный прогон).
+### Git состояние
 
-**Заблокировано backend'ом:**
-- **`CODEX_NEXT.md` N4** — Telegram OTP. Ждёт backend-договорённости о dev-endpoint.
+```
+31a0e42 test(web_ui): Playwright suite + operational docs
+707918a test: API suite covering auth, employees, me, and full carrier flows
+2da92d2 feat(api): httpx client, schemas, endpoint wrappers, test data layer
+5a22626 chore: project scaffolding and tooling config
+```
+- `git status` — ` D CODEX_COMMIT.md` + правки в `bug.txt`, `NOW.md`
+  (накопились после E2E зелёного). Готовы к 5-му коммиту.
+- ruff 0, mypy --strict 0, pytest --collect-only 378 tests.
 
 ---
 
@@ -98,28 +175,36 @@ pytest tests/ -n 6 --tb=line -q   (5:43)
 
 ---
 
-## Bug status (vs `bug.txt` от 2026-05-05)
+## Bug status (verified 2026-05-13)
 
-### Закрыты (XPASS в прогоне 2026-05-12)
-| Bug | Подтверждающий тест |
+### Закрыты в эту сессию
+| Bug | Как подтверждено |
 |---|---|
-| BUG-005 (дубль TIN в /suppliers) | `test_register_supplier_with_duplicate_tin_returns_409` |
-| BUG-005 cross-flow TIN Supplier↔TK | `test_supplier_and_tk_cannot_share_tin` |
-| BUG-003 cross-flow email Supplier↔TK | `test_email_taken_by_supplier_blocks_tk_registration` |
-| BUG-007 или BUG-009 (дубль phone) | `test_same_phone_blocks_second_supplier_registration` — нумерация в xfail-сообщении расходится с bug.txt, нужна сверка (Codex Task 7) |
+| BUG-004 (admin 403 на select winner) | E2E §4 шаг 12 проходит 2/2 |
+| BUG-008 (TK_ADMIN 401) | E2E §4 шаг 8 проходит 2/2 |
+| BUG-010 (IMAP timeout) | non-reproducible flake |
+| BUG-009 (cross-flow phone) | probe 2026-05-13: TK reg same phone → 409 |
 
-### Открыты (в bug.txt, в этом прогоне не верифицировались отдельно)
-- **BUG-001** P1 — дубль email в /suppliers → 204 вместо 409
-- **BUG-002** P2 — Swagger UI за oauth2-proxy
-- **BUG-003** P1 — INN UI 8–18 vs API 1–18 (контракт-дрифт)
-- **BUG-004** P1 — `/offers/{id}/select` → 403 для SUPPLIER_ADMIN
-- **BUG-006** P1 — UI не показывает action-кнопки на «В работе»
-- **BUG-007** P1 — TK `/offers` крашится 404 на оффер удалённой заявки (блокируется BUG-008)
-- **BUG-008** **P0** — TK_ADMIN JWT → 401 на `/me`, `/my-offers`, `/feed`
+### Открыты, верифицированы 2026-05-13 (5 шт)
+- **BUG-001** P1 — дубль email в /suppliers → 204 (backend не вернул 409).
+- **BUG-002** P2 — Swagger /v3/api-docs → 302 oauth2-proxy.
+- **BUG-003** P1 — **CHANGED**: API теперь TIN ровно 12, UI 8-18. Направление
+  дрифта поменялось. Нужен fix UI (12 цифр) + swagger update.
+- **BUG-005** P3 — MZL не уникален cross-company. Probe создал 2 ордера в
+  2 компаниях, оба `MZL-0001`.
+- **BUG-007** P1 — **FRONTEND-ONLY** (verified). Backend в `/my-offers`
+  возвращает 200 + `orderStatus='CANCELLED'` в response item. Фронт должен
+  использовать это поле вместо отдельного fetch заявки.
 
-### Возможные новые баги (вскроются после probe в Codex)
-- Если `POST /employees` 400 не объясняется UPPERCASE-ролью → новый bug.
-- Если `POST /orders` 400 не объясняется новыми required-полями → новый bug.
+### НЕ верифицировано — требует Playwright
+- **BUG-006** P1 — UI action-кнопки на «В работе».
+
+### Новая находка (Q7 в bug.txt)
+- POST /orders/{id}/cancel: DISPATCHER получает 409 «not-cancellable» если у
+  order есть active offer, ADMIN отменяет успешно. Это feature (admin override)
+  или непрописанный RBAC bug? Нужно сверить с BRD §3.
+
+Probe-скрипты: `/tmp/probe_all_bugs.py`, `/tmp/probe_remaining_bugs.py`.
 
 ---
 
@@ -153,12 +238,13 @@ pytest tests/ -n 6 --tb=line -q   (5:43)
 |---|---|
 | Стабильный конфиг проекта | `CLAUDE.md` |
 | Открытые баги | `bug.txt` (обновл. 2026-05-05) |
-| Активное для Codex | `CODEX_COMMIT.md` (N1) |
-| После N1 — E2E верификация | `CODEX_NEXT.md` N3 |
+| Желательно: 5-й коммит | накопившиеся правки `bug.txt` + `NOW.md` + удаление `CODEX_COMMIT.md` |
+| Желательно: BUG-007 ретест | UI-сценарий через `web_ui/tk/offers/` (разблокирован после BUG-008) |
 | Ждёт пользователя (APK/IPA) | `CODEX_MOBILE.md` Wave 1 |
 | Заблокировано backend-ask'ом | `CODEX_NEXT.md` N4 (Telegram OTP) |
-| Следующая волна (API: commit + CI + E2E + OTP) | `CODEX_NEXT.md` |
-| Mobile-план (Appium, обе платформы) | `CODEX_MOBILE.md` |
+| Отложенные API задачи (E2E + OTP) | `CODEX_NEXT.md` |
+| Mobile-план (5 волн, Maestro, Android+iOS) | `CODEX_MOBILE.md` |
+| Backend/Frontend asks (Telegram OTP, testID) | `BACKEND_ASKS.md` |
 | Лог baseline-прогона | `/tmp/manzil_full_run.log` |
 | Allure-результаты | `allure-results/` (allure serve allure-results) |
 | Воркфлоу-память Claude | `~/.claude/projects/-Users-.../memory/` |

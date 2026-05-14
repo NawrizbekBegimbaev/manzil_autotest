@@ -84,8 +84,15 @@ pytest tests/ -m "smoke and not requires_email_otp"
 playwright install chromium                     # один раз на машину
 pytest web_ui/                                  # UI-петля (медленная)
 
+maestro --version                               # mobile требует Maestro CLI
+pytest mobile/ -m mobile_smoke                  # быстрые W1 smoke + login
+pytest mobile/ -m "mobile and not requires_real_account"  # без driver-аккаунта
+
 allure serve allure-results
 ```
+
+Mobile-прогоны требуют установленный APK/IPA и запущенный emulator/simulator
+до старта pytest. Android dev app id: `uz.greatmall.manzil.dev`.
 
 ## Структура
 
