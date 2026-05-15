@@ -2,7 +2,7 @@
 
 > Project: `/Users/n.begimbayevgreatmall.uz/Documents/Manzil`
 > Stable info → `CLAUDE.md`. Этот файл — что меняется от сессии к сессии.
-> **Last updated:** 2026-05-14 (W3 done — Android 29/29 passing, ~30% coverage, 9 commits)
+> **Last updated:** 2026-05-14 (W4 done — Android 41/41 passing, ~40% coverage, 11 commits)
 
 ---
 
@@ -68,7 +68,7 @@ Bug.txt обновлён: closed-секция дополнена, в open-сек
 
 | Wave | Что | Поднимет coverage | Блокер |
 |---|---|---|---|
-| **W4** | Negative paths + edge cases + RBAC + i18n full | 30% → 40% (bug-finding power) | — |
+| **W4** ✅ done | Negative + filters + logout + i18n | 30% → 40% | — |
 | W5 | Driver registration end-to-end | 40% → 45% | **Telegram OTP backend ask** (N4) |
 | W6 | iOS parity | 45% → 50% | **iOS simulator-build** (BACKEND_ASKS) |
 | W7 | Performance + accessibility | 50% → 55% | весь предыдущий покрытие |
@@ -109,7 +109,7 @@ Codex реализовал W2: order detail + submit offer + my-offer detail.
 
 Coverage после W2: ~20% от senior manual QA work (с 5-10% до W2).
 
-### Mobile Android ✅ 29/29 passing 2026-05-14
+### Mobile Android ✅ 41/41 passing 2026-05-14 (W4 done)
 
 После 5 итераций фиксов на реальном Pixel-эмуляторе:
 - **W1+W2 (21 теста):** smoke, login, navigation, post-login tabs, profile read,
@@ -118,9 +118,18 @@ Coverage после W2: ~20% от senior manual QA work (с 5-10% до W2).
 - **W3 (8 тестов):** profile sections, edit form, save disabled, back nav,
   date picker, edit name/city/vehicle (3 mutation)
 
-Total Android tests passing: **29/29**. iOS tests skip (ждём simulator build).
+After W4: 12 flows / 24 tests adding filter (Lenta), logout, login negative,
+forgot password smoke, offer submit edge cases (price=0, price=999M),
+profile Kuzov turi dropdown, и полный UZ↔RU language switch cycle.
 
-**Coverage: ~30% от senior manual QA work** (5% старт сессии → 30% после W3).
+Edge tests price=0 + price=999M passed — backend accepts both values
+without errors. Это потенциальные business-rule вопросы для product/backend
+(добавлен раздел в bug.txt: BUG-OBSERVATION).
+
+Total Android tests passing: **41/41**. iOS tests skip (ждём simulator build).
+
+Coverage: ~40% от senior manual QA work — реалистичный потолок для
+Maestro local без backend-разблокировок W5 (Telegram OTP) и W6 (iOS build).
 
 ### iOS — заморожено 2026-05-14
 

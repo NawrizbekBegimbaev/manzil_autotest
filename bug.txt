@@ -40,6 +40,19 @@ CLOSED (verified 2026-05-13 by /tmp/probe_all_bugs.py)
 Также пере-верифицировано (по-прежнему открыто): BUG-001, BUG-002.
 Существенно изменилось: BUG-003 (см. ниже — направление дрифта поменялось).
 
+================================================================================
+OBSERVATIONS (mobile W4 2026-05-14 — to investigate, not yet confirmed bugs)
+================================================================================
+- Mobile submit offer with price=0 → backend accepts (mutation test
+  submit_zero_price passed without form re-open or error). Product question:
+  should a zero-price offer be valid?
+- Mobile submit offer with price=999999999 → backend accepts (mutation test
+  submit_large_price passed). Product question: should there be an upper
+  bound?
+
+Both observations need product/backend confirmation before deciding if
+they are bugs. Tests pass either way (form closes on submit).
+
 Дата обнаружения:   2026-04-30 (initial)
 Re-verified:        2026-05-13 (probe + E2E run)
 Окружение:          dev (architecture: same-origin)
