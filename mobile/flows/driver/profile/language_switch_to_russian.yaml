@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+tags:
+  - profile
+  - i18n
+  - post-login
+---
+- runFlow:
+    file: ../_common/login_and_open_profile.yaml
+- tapOn: "Til"
+- extendedWaitUntil:
+    visible: ".*(Русский|Russian|РУ).*"
+    timeout: 5000
+- tapOn:
+    text: ".*Рус.*"
+- extendedWaitUntil:
+    visible: ".*(Профиль|Profil).*"
+    timeout: 8000
+- tapOn: ".*(Язык|Til).*"
+- tapOn:
+    text: ".*(O.*zbek|O‘zbek).*"
+- extendedWaitUntil:
+    visible: "Profil"
+    timeout: 8000

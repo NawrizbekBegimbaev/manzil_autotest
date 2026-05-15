@@ -1,0 +1,20 @@
+appId: ${APP_ID}
+tags:
+  - profile
+  - logout
+  - post-login
+  - mutation
+---
+- runFlow:
+    file: ../_common/login_and_open_profile.yaml
+- scroll
+- scroll
+- assertVisible: "Chiqish"
+- tapOn: "Chiqish"
+- extendedWaitUntil:
+    visible: "Tizimga kirish"
+    timeout: 5000
+- assertVisible: "+998"
+- assertVisible: "Parol"
+- assertVisible: "Kirish"
+- assertNotVisible: "Profil"
