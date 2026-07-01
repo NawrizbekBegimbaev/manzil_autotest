@@ -1,0 +1,62 @@
+# M2. Warehouse operator creates an order (ariza) — the mobile-only step.
+# VALIDATED end-to-end against the staging app (Uzbek UI): publishes a real order
+# (e.g. QOFK-00001). The order number prefix comes from the shipper company.
+#
+# Route addresses are saved server-side per account: the first order adds them
+# inline ("Manzil qoʻshish": Shahar/Davlat/Tuman are free-text); later orders
+# default to the saved from/to warehouses. The conditionals below add an address
+# only when its placeholder is still showing, so the flow works on a fresh account
+# AND on one that already has warehouses. Loading date defaults to today.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+
+- tapOn: "Ariza yaratish"        # create FAB
+- tapOn: "Avtomobil"             # transport type
+- tapOn: "BIG 800"               # vehicle type chip
+- tapOn: "1 haydovchi"           # drivers count
+
+# --- Loading (from) address — add only if not already set ---
+# Tap the EDITTEXT below each label (tapping the label itself doesn't focus the
+# field on this build); hide the keyboard before "Qoʻshish" — it sits under it.
+- runFlow:
+    when:
+      visible: "Yuklash manzili"
+    commands:
+      - tapOn: "Yuklash manzili"
+      - tapOn: "Shahar"
+      - inputText: "Tashkent"
+      - hideKeyboard
+      - tapOn: "Davlat"
+      - inputText: "Uzbekistan"
+      - hideKeyboard
+      - tapOn: "Tuman / manzil"
+      - inputText: "Sayyod 1"
+      - hideKeyboard
+      - tapOn: "Qoʻshish"
+
+# --- Delivery (to) address — add only if not already set ---
+- runFlow:
+    when:
+      visible: "Yetkazib berish manzili"
+    commands:
+      - tapOn: "Yetkazib berish manzili"
+      - tapOn: "Shahar"
+      - inputText: "Beijing"
+      - hideKeyboard
+      - tapOn: "Davlat"
+      - inputText: "China"
+      - hideKeyboard
+      - tapOn: "Tuman / manzil"
+      - inputText: "Chaoyang 1"
+      - hideKeyboard
+      - tapOn: "Qoʻshish"
+
+# --- Review + publish ---
+- tapOn: "Koʻrib chiqish"        # review
+- tapOn: "Eʼlon qilish"          # publish
+- assertVisible: "Eʼlon qilindi" # order appears under the "Published" tab

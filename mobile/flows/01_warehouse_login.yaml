@@ -1,0 +1,10 @@
+# M1. Warehouse operator login (mobile). VALIDATED on the staging emulator.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+# Orders home: the create FAB confirms we're logged in.
+- assertVisible: "Ariza yaratish"   # "Create order" FAB (content-desc)

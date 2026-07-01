@@ -1,8 +1,0 @@
-appId: ${APP_ID}
----
-- runFlow:
-    file: login_as_driver.yaml
-- tapOn: "Profil"
-- extendedWaitUntil:
-    visible: "Shaxsiy ma'lumotlar"
-    timeout: 8000

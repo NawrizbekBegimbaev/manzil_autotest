@@ -1,0 +1,11 @@
+# Login → open a status tab → assert a specific order number is visible there.
+# Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB (uz tab label), ORDER_NO.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: ${TAB}
+- assertVisible: ${ORDER_NO}

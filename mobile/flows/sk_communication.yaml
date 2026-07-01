@@ -1,0 +1,16 @@
+# SK-12: open an IN_WORK order → mark "contacted the driver".
+# Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB, ORDER_NO.
+# NOTE: blocked on the current app build (BUG-012: communication POST → 400).
+# Ready for the next build with the fixed contract.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: ${TAB}
+- tapOn: ${ORDER_NO}
+- tapOn: "Haydovchi bilan aloqa"      # communication row
+- tapOn: "Ha, gaplashdik"             # "Yes, we talked"
+- assertVisible: "Aloqa qilindi"      # status flips to "contacted"

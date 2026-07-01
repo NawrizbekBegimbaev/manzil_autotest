@@ -1,0 +1,18 @@
+# SK-13: open an IN_WORK order (already "contacted") → send goods → status "Yoʻlda".
+# Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB, ORDER_NO.
+# NOTE: blocked on the current app build (the "send goods" button stays disabled
+# until communication is confirmed, which itself fails — BUG-012). Ready for the
+# next build.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: ${TAB}
+- tapOn: ${ORDER_NO}
+- tapOn: "Haydovchi bilan aloqa"
+- tapOn: "Ha, gaplashdik"
+- tapOn: "Yuk joʻnatildi"             # "Goods sent"
+- assertVisible: "Yoʻlda"             # order moves to "In transit"

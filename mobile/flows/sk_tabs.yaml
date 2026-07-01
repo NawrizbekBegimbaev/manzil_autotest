@@ -1,0 +1,11 @@
+# SK-02: warehouse login → status tabs visible on the orders home.
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- assertVisible: "Eʼlon qilindi"
+- assertVisible: "Olingan"
+- assertVisible: "Tugallangan"

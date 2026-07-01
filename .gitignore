@@ -23,3 +23,11 @@ storage_state*.json
 .playwright-state/
 playwright-traces/
 .playwright-mcp/
+
+# sanity suite artifacts
+artifacts/
+reports/
+.hypothesis/
+
+# mobile maestro secrets
+mobile/config/maestro.env

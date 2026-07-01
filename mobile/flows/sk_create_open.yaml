@@ -1,0 +1,14 @@
+# SK-03: warehouse login → start order creation → pick transport type → form opens.
+# Does NOT add an address (that path is blocked by the backend cityId contract —
+# see SK-05/06/07), so this stops at "the create form is shown".
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: "Ariza yaratish"     # "+" create FAB
+- tapOn: "Avtomobil"          # transport type: road
+- assertVisible: "BIG 800"          # vehicle-type chips render → the form is open
+- assertVisible: "Koʻrib chiqish"   # review button present

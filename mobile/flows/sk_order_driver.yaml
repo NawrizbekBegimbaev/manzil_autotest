@@ -1,0 +1,16 @@
+# SK-11: open an IN_WORK order (Ishda tab) → the assigned driver is shown.
+# Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB, ORDER_NO, DRIVER (full name).
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: ${TAB}
+- tapOn: ${ORDER_NO}
+# Detail header shows internal "ID" not the display number, so assert the driver
+# block instead: section title + the assigned driver's full name + plate label.
+- assertVisible: "Haydovchi maʼlumotlari"   # "Driver info" section
+- assertVisible: ${DRIVER}                   # assigned driver full name
+- assertVisible: "Davlat raqami"             # license-plate row

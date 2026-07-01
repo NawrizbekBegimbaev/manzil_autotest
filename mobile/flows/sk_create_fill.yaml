@@ -1,0 +1,16 @@
+# SK-04: in the create form, pick vehicle type + drivers count; loading date
+# defaults to today. Asserts the chosen values + that the review button is present.
+# Stops before the address step (blocked — see SK-05/06/07).
+appId: ${APP_ID}
+---
+- runFlow:
+    file: common/login.yaml
+    env:
+      PHONE: ${WAREHOUSE_PHONE}
+      PASSWORD: ${WAREHOUSE_PASSWORD}
+- tapOn: "Ariza yaratish"
+- tapOn: "Avtomobil"
+- tapOn: "BIG 800"            # vehicle type chip
+- tapOn: "1 haydovchi"        # drivers count
+- assertVisible: ".*Yuklash sanasi.*"   # loading-date field (defaults to today)
+- assertVisible: ".*Yoʻnalish.*"        # route section present → ready to add addresses
