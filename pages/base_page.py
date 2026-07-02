@@ -52,6 +52,19 @@ class BasePage:
         self.page.get_by_role("menu").last.wait_for(state="visible")
         return self
 
+    def filter_search_panel(self, text: str):
+        """Open «Фильтры» and type into the DataGrid filter panel's search input.
+        Used where the search box has no stable placeholder (e.g. the carrier app)
+        — targets the visible text input inside the MUI DataGrid filter Popper."""
+        box = self.page.locator('.MuiDataGrid-panel input[type="text"]').first
+        if not box.is_visible():
+            btn = self.page.get_by_role("button", name="Фильтры").first
+            btn.wait_for(state="visible")
+            btn.click()
+            box.wait_for(state="visible")
+        box.fill(text)
+        return box
+
     def filter_search(self, placeholder: str, text: str):
         """Reveal the filters panel (search moved behind the «Фильтры» button on
         the redesigned list toolbar) and type into the search box. Idempotent:

@@ -45,7 +45,7 @@ class CarrierOrdersPage(BasePage):
         return self
 
     def search(self, text: str) -> "CarrierOrdersPage":
-        self.filter_search("Поиск (номер заказа)", text)
+        self.filter_search_panel(text)
         return self
 
     def open_tab(self, name: str) -> "CarrierOrdersPage":

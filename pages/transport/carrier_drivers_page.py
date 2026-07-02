@@ -36,7 +36,7 @@ class CarrierDriversPage(BasePage):
         return self
 
     def search(self, text: str) -> "CarrierDriversPage":
-        self.filter_search("Поиск (ФИО, телефон)", text)
+        self.filter_search_panel(text)
         return self
 
     def row(self, text: str):
