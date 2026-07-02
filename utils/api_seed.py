@@ -19,9 +19,23 @@ import random
 import string
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from config.settings import Settings
 from utils.data import TenantCreds, unique_phone, unique_tin
+
+
+def _retrying_session() -> requests.Session:
+    """A requests session that rides out transient CONNECT failures (DNS blips,
+    connection timeouts) common on this host — retries only pre-send connection
+    errors (never read errors), so a POST is never silently duplicated."""
+    s = requests.Session()
+    retry = Retry(total=5, connect=5, read=0, status=0, backoff_factor=1.0,
+                  raise_on_status=False)
+    s.mount("https://", HTTPAdapter(max_retries=retry))
+    s.mount("http://", HTTPAdapter(max_retries=retry))
+    return s
 
 
 def _plate() -> str:
@@ -41,12 +55,13 @@ class ApiSeed:
         self._tokens: dict[str, str] = {}
         self._vt_id: str | None = None
         self._wh_ids: list[str] | None = None
+        self._session = _retrying_session()
 
     # ── low-level ──
     def _login(self, phone: str, client_type: str, password: str | None = None) -> str:
         key = f"{phone}:{client_type}"
         if key not in self._tokens:
-            r = requests.post(
+            r = self._session.post(
                 f"{self.base}/auth/login",
                 json={"phone": phone, "password": password or self.creds.password,
                       "clientType": client_type},
@@ -70,7 +85,7 @@ class ApiSeed:
         return {"Authorization": f"Bearer {token}"}
 
     def _req(self, method: str, path: str, token: str, **kw) -> requests.Response:
-        r = requests.request(method, f"{self.base}{path}", headers=self._h(token), timeout=30, **kw)
+        r = self._session.request(method, f"{self.base}{path}", headers=self._h(token), timeout=30, **kw)
         if r.status_code >= 400:
             raise ApiError(f"{method} {path}: {r.status_code} {r.text[:300]}")
         return r
