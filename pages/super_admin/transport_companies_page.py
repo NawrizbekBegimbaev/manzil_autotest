@@ -51,7 +51,7 @@ class TransportCompaniesPage(BasePage):
         return self
 
     def search(self, text: str) -> "TransportCompaniesPage":
-        self.page.get_by_placeholder("ФИО / телефон / компания").fill(text)
+        self.filter_search("ФИО / телефон / компания", text)
         return self
 
     def row(self, text: str):
@@ -61,7 +61,7 @@ class TransportCompaniesPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Удалить").click()
         self.page.get_by_role("dialog").get_by_role("button", name="Удалить").click()
         row.wait_for(state="detached")
@@ -71,7 +71,7 @@ class TransportCompaniesPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Редактировать").click()
         self.dialog.wait_for(state="visible")
         return self

@@ -34,7 +34,7 @@ def test_sa01_login(super_admin_page, cfg):
 def test_sa02_shippers_list(super_admin_page, cfg):
     page = ShipperCompaniesPage(super_admin_page, cfg).open()
     expect(super_admin_page.get_by_role("heading", name="Грузоотправители").first).to_be_visible()
-    expect(page.page.get_by_role("table")).to_be_visible()
+    expect(page.page.locator('[role="grid"], table').first).to_be_visible()
 
 
 @allure.title("SA-03 Поиск и фильтр грузоотправителей")
@@ -124,7 +124,7 @@ def test_sa08_delete_shipper(super_admin_page, cfg):
 def test_sa09_transport_list(super_admin_page, cfg):
     TransportCompaniesPage(super_admin_page, cfg).open()
     expect(super_admin_page.get_by_role("heading", name="Транспортные компании").first).to_be_visible()
-    expect(super_admin_page.get_by_role("table")).to_be_visible()
+    expect(super_admin_page.locator('[role="grid"], table').first).to_be_visible()
 
 
 @allure.title("SA-10 Создание транспортной компании")

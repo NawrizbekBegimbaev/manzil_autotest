@@ -51,8 +51,7 @@ class ShipperCompaniesPage(BasePage):
         return self
 
     def search(self, text: str) -> "ShipperCompaniesPage":
-        box = self.page.get_by_placeholder("ФИО / телефон / компания")
-        box.fill(text)
+        self.filter_search("ФИО / телефон / компания", text)
         return self
 
     def row(self, text: str):
@@ -63,7 +62,7 @@ class ShipperCompaniesPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Удалить").click()
         self.page.get_by_role("dialog").get_by_role("button", name="Удалить").click()
         row.wait_for(state="detached")
@@ -71,6 +70,9 @@ class ShipperCompaniesPage(BasePage):
 
     def open_card(self, text: str) -> "ShipperCompaniesPage":
         self.search(text)
+        # the filters panel is a Popper overlaying the grid — close it (the applied
+        # filter persists) so it doesn't intercept the row click, then open the card.
+        self.page.keyboard.press("Escape")
         self.row(text).first.click()
         return self
 
@@ -78,7 +80,7 @@ class ShipperCompaniesPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Редактировать").click()
         self.dialog.wait_for(state="visible")
         return self

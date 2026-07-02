@@ -46,7 +46,7 @@ def test_ad02_dashboard(admin_page, cfg):
 def test_ad03_orders_list(admin_page, cfg):
     ShipperOrdersPage(admin_page, cfg).open()
     expect(admin_page.get_by_role("heading", name="Админ").first).to_be_visible()
-    expect(admin_page.get_by_role("table")).to_be_visible()
+    expect(admin_page.locator('[role="grid"], table').first).to_be_visible()
 
 
 @allure.title("AD-04 Фильтрация списка заказов")

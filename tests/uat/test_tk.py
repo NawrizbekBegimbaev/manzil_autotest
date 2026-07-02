@@ -30,7 +30,7 @@ def test_tk01_login(carrier_page):
 @allure.title("TK-02 Просмотр доступных заявок (лента)")
 def test_tk02_feed(carrier_page, cfg):
     CarrierOrdersPage(carrier_page, cfg).open()
-    expect(carrier_page.get_by_role("table")).to_be_visible()
+    expect(carrier_page.locator('[role="grid"], table').first).to_be_visible()
 
 
 @allure.title("TK-03 Поиск заявки по номеру")

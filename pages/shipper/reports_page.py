@@ -21,4 +21,4 @@ class ReportsPage(BasePage):
 
     @property
     def table(self):
-        return self.page.get_by_role("table")
+        return self.page.locator('[role="grid"], table').first

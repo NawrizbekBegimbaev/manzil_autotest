@@ -29,6 +29,7 @@ class CarrierOrdersPage(BasePage):
         return self.page.get_by_role("row").filter(has_text=order_no)
 
     def open_order(self, order_no: str) -> "CarrierOrdersPage":
+        self.page.keyboard.press("Escape")  # close the filters Popper if open
         self.order_row(order_no).first.click()
         self.page.wait_for_url(re.compile(r"/transport/orders/"))
         return self
@@ -44,9 +45,7 @@ class CarrierOrdersPage(BasePage):
         return self
 
     def search(self, text: str) -> "CarrierOrdersPage":
-        box = self.page.get_by_placeholder("Поиск (номер заказа)")
-        if box.count():
-            box.first.fill(text)
+        self.filter_search("Поиск (номер заказа)", text)
         return self
 
     def open_tab(self, name: str) -> "CarrierOrdersPage":

@@ -44,9 +44,7 @@ class StaffPage(BasePage):
         return self
 
     def search(self, text: str) -> "StaffPage":
-        box = self.page.get_by_placeholder("Введите ФИО или телефон")
-        if box.count():
-            box.fill(text)
+        self.filter_search("Введите ФИО или телефон", text)
         return self
 
     def row(self, text: str):
@@ -56,7 +54,7 @@ class StaffPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Редактировать").click()
         self.dialog.wait_for(state="visible")
         return self
@@ -74,7 +72,7 @@ class StaffPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Удалить").click()
         self.page.get_by_role("dialog").get_by_role("button", name="Удалить").click()
         row.wait_for(state="detached")

@@ -24,7 +24,7 @@ def test_mn01_login(manager_page):
 def test_mn02_storeroom_list(manager_page, cfg):
     StoreroomPage(manager_page, cfg).open()
     expect(manager_page.get_by_role("heading", name="Оператор склада").first).to_be_visible()
-    expect(manager_page.get_by_role("table")).to_be_visible()
+    expect(manager_page.locator('[role="grid"], table').first).to_be_visible()
 
 
 @allure.title("MN-03 Фильтрация заявок")

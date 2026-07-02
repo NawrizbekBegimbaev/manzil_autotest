@@ -19,15 +19,14 @@ class StoreroomPage(BasePage):
         return self
 
     def filter_by_number(self, order_no: str) -> "StoreroomPage":
-        box = self.page.get_by_placeholder("Номер заказа")
-        if box.count():
-            box.first.fill(order_no)
+        self.filter_search("Номер заказа", order_no)
         return self
 
     def order_row(self, order_no: str):
         return self.page.get_by_role("row").filter(has_text=order_no)
 
     def open_order(self, order_no: str) -> "StoreroomPage":
+        self.page.keyboard.press("Escape")  # close the filters Popper if open
         self.order_row(order_no).first.click()
         self.page.wait_for_url(re.compile(r"/shipper/storeroom/"))
         return self
@@ -36,7 +35,7 @@ class StoreroomPage(BasePage):
         self.filter_by_number(order_no)
         row = self.order_row(order_no).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Отменить заказ").click()
         self.dialog.wait_for(state="visible")
         ta = self.dialog.locator("textarea, input[type=text]")
@@ -49,7 +48,7 @@ class StoreroomPage(BasePage):
         self.filter_by_number(order_no)
         row = self.order_row(order_no).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Опубликовать повторно").click()
         self.dialog.wait_for(state="visible")
         return self

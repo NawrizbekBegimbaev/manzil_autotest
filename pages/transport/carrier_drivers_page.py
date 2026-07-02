@@ -36,9 +36,7 @@ class CarrierDriversPage(BasePage):
         return self
 
     def search(self, text: str) -> "CarrierDriversPage":
-        box = self.page.get_by_placeholder("Поиск (ФИО, телефон)")
-        if box.count():
-            box.first.fill(text)
+        self.filter_search("Поиск (ФИО, телефон)", text)
         return self
 
     def row(self, text: str):
@@ -48,7 +46,7 @@ class CarrierDriversPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Редактировать").click()
         self.dialog.wait_for(state="visible")
         return self
@@ -66,7 +64,7 @@ class CarrierDriversPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Удалить").click()
         self.page.get_by_role("dialog").get_by_role("button", name="Удалить").click()
         row.wait_for(state="detached")

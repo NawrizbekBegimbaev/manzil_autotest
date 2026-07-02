@@ -17,9 +17,7 @@ class CommunicationPage(BasePage):
         return self
 
     def filter_by_number(self, order_no: str) -> "CommunicationPage":
-        box = self.page.get_by_placeholder("Номер заказа")
-        if box.count():
-            box.first.fill(order_no)
+        self.filter_search("Номер заказа", order_no)
         return self
 
     def order_row(self, order_no: str):
@@ -29,6 +27,6 @@ class CommunicationPage(BasePage):
         self.filter_by_number(order_no)
         row = self.order_row(order_no).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Связь с водителем").click()
         return self

@@ -16,5 +16,9 @@ appId: ${APP_ID}
       visible: "Not now"
     commands:
       - tapOn: "Not now"
-- assertVisible:
-    text: "Ariza yaratish"       # FAB on the orders home — proves we're logged in
+# Wait up to 30s for the orders home — absorbs cold-start slowness (login makes a
+# network call). extendedWaitUntil supports a timeout; assertVisible does not.
+- extendedWaitUntil:
+    visible:
+      text: "Ariza yaratish"     # FAB on the orders home — proves we're logged in
+    timeout: 30000

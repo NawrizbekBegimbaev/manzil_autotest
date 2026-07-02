@@ -27,6 +27,7 @@ class ShipperOrdersPage(BasePage):
         return self.page.get_by_role("row").filter(has_text=order_no)
 
     def open_order(self, order_no: str) -> "ShipperOrdersPage":
+        self.page.keyboard.press("Escape")  # close the filters Popper if open
         self.order_row(order_no).first.click()
         self.page.wait_for_url(re.compile(r"/shipper/orders/"))
         return self
@@ -38,7 +39,7 @@ class ShipperOrdersPage(BasePage):
         return self
 
     def filter_by_number(self, order_no: str) -> "ShipperOrdersPage":
-        self.page.get_by_placeholder("Номер заказа").fill(order_no)
+        self.filter_search("Номер заказа", order_no)
         btn = self.page.get_by_role("button", name="Подтвердить")
         if btn.count():
             btn.first.click()
@@ -46,14 +47,14 @@ class ShipperOrdersPage(BasePage):
 
     def offers_table(self):
         """Offers section on the order detail page."""
-        return self.page.get_by_role("table")
+        return self.page.locator('[role="grid"], table').first
 
     def cancel_order_from_list(self, order_no: str, reason: str = "Отмена по тесту") -> "ShipperOrdersPage":
         """Cancel a SELECTED+ order via the list row action menu."""
         self.filter_by_number(order_no)
         row = self.order_row(order_no).first
         row.wait_for(state="visible")
-        row.get_by_role("button").last.click()
+        self.open_row_menu(row)
         self.page.get_by_role("menuitem", name="Отменить заказ").click()
         self.dialog.wait_for(state="visible")
         ta = self.dialog.locator("textarea, input[type=text]")

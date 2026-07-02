@@ -35,9 +35,7 @@ class WarehousesPage(BasePage):
         return self
 
     def search(self, text: str) -> "WarehousesPage":
-        box = self.page.get_by_placeholder("Название или адрес")
-        if box.count():
-            box.fill(text)
+        self.filter_search("Название или адрес", text)
         return self
 
     def row(self, text: str):
