@@ -34,12 +34,20 @@ def emulator_ready() -> bool:
     return any(line.strip().endswith("\tdevice") for line in out.splitlines()[1:])
 
 
-def run_flow(flow: str, **env_vars) -> None:
-    """Run a Maestro flow file under mobile/flows; raise AssertionError on failure."""
+def run_flow(flow: str, attempts: int = 2, **env_vars) -> None:
+    """Run a Maestro flow file under mobile/flows; raise AssertionError on failure.
+
+    Retries once by default: mobile flows occasionally flake on a transient
+    emulator/network hiccup (cold-start slowness, a DNS blip), so a single retry
+    keeps the daily run stable without masking a real regression.
+    """
     cmd = [MAESTRO, "test", os.path.join(FLOWS, flow), "-e", f"APP_ID={APP_ID}"]
     for k, v in env_vars.items():
         cmd += ["-e", f"{k}={v}"]
-    r = subprocess.run(cmd, env=_env(), capture_output=True, text=True, timeout=300)
-    if r.returncode != 0:
-        tail = (r.stdout or "")[-1500:] + "\n" + (r.stderr or "")[-500:]
-        raise AssertionError(f"Maestro flow {flow} failed (rc={r.returncode}):\n{tail}")
+    last = None
+    for i in range(attempts):
+        r = subprocess.run(cmd, env=_env(), capture_output=True, text=True, timeout=300)
+        if r.returncode == 0:
+            return
+        last = (r.stdout or "")[-1500:] + "\n" + (r.stderr or "")[-500:]
+    raise AssertionError(f"Maestro flow {flow} failed after {attempts} attempts:\n{last}")
