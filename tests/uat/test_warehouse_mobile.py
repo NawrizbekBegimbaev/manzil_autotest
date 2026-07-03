@@ -5,14 +5,11 @@ provisioned warehouse account; order preconditions are API-seeded. Skipped when
 no emulator/Maestro is available (so the web-only daily run still produces a
 report — these show as «Не автоматизирован»).
 
-BUG-011 (адрес) — ИСПРАВЛЕН в билде: экран адреса теперь Davlat + поиск города
-(→ cityId) + свободный адрес, POST /warehouse/locations идёт с cityId → 201.
-SK-05/06/07 (создание/публикация) снова автоматизированы и зелёные.
-
-BUG-012 (связь, SK-12/13) — ВСЁ ЕЩЁ ОТКРЫТ: приложение шлёт
-POST /warehouse/orders/{id}/communication телом 16 байт (status=YES?) → 400
-«Noto'g'ri so'rov» (перепроверено 2026-07-03); backend ждёт status=CONFIRMED.
-Отметка связи и далее отправка груза через UI невозможны до фикса. См. docs/BUGS.md.
+BUG-011 (адрес) и BUG-012 (связь) — ИСПРАВЛЕНЫ. Адрес: экран Davlat + поиск города
+(→ cityId), POST /warehouse/locations → 201. Связь: диалог с enum-статусами
+(Tasdiqlandi/Rad etildi/Aloqasiz/Bogʻlanish), POST /communication → 204; отправка
+груза («Yuk joʻnatildi» + подтверждение) → 200, заявка в «Yoʻlda». Все SK
+автоматизированы и зелёные.
 """
 
 from __future__ import annotations
@@ -23,14 +20,6 @@ import pytest
 from utils.maestro import emulator_ready, run_flow
 
 pytestmark = [pytest.mark.uat, pytest.mark.warehouse]
-
-_BLOCKED_COMM = (
-    "Заблокировано BUG-012: приложение склада 1.1.1-staging шлёт "
-    "POST /warehouse/orders/{id}/communication c неверным телом (16 байт, "
-    "напр. status=YES) → 400; backend ждёт status=CONFIRMED. Отметка связи и "
-    "далее отправка груза через UI невозможны до нового билда."
-)
-
 
 @pytest.fixture(autouse=True)
 def _require_emulator():
@@ -105,14 +94,12 @@ def test_sk11_driver_visible(provisioned, seeder):
 
 
 @allure.title("SK-12 Отметка связи с водителем")
-@pytest.mark.xfail(reason=_BLOCKED_COMM, strict=False, run=False)
 def test_sk12_communication(provisioned, seeder):
     o = seeder.order("in_work")
     run_flow("sk_communication.yaml", TAB="Ishda", ORDER_NO=o["displayNumber"], **_wh(provisioned))
 
 
 @allure.title("SK-13 Отправка груза → «В пути»")
-@pytest.mark.xfail(reason=_BLOCKED_COMM, strict=False, run=False)
 def test_sk13_goods_sent(provisioned, seeder):
     o = seeder.order("in_work")
     run_flow("sk_goods_sent.yaml", TAB="Ishda", ORDER_NO=o["displayNumber"], **_wh(provisioned))

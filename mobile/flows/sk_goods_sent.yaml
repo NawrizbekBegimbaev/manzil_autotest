@@ -1,8 +1,8 @@
-# SK-13: open an IN_WORK order (already "contacted") → send goods → status "Yoʻlda".
+# SK-13: open an IN_WORK order → confirm driver communication → send goods → «Yoʻlda».
 # Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB, ORDER_NO.
-# NOTE: blocked on the current app build (the "send goods" button stays disabled
-# until communication is confirmed, which itself fails — BUG-012). Ready for the
-# next build.
+# BUG-012 fixed: communication (Tasdiqlandi → 204) enables «Yuk joʻnatildi»; the
+# send-goods confirm dialog («Yuk joʻnatilganini tasdiqlaysizmi?») → POST /goods-sent
+# 200 → order moves to «Yoʻlda» (IN_TRANSIT).
 appId: ${APP_ID}
 ---
 - runFlow:
@@ -13,6 +13,8 @@ appId: ${APP_ID}
 - tapOn: ${TAB}
 - tapOn: ${ORDER_NO}
 - tapOn: "Haydovchi bilan aloqa"
-- tapOn: "Ha, gaplashdik"
-- tapOn: "Yuk joʻnatildi"             # "Goods sent"
-- assertVisible: "Yoʻlda"             # order moves to "In transit"
+- tapOn: "Tasdiqlandi"                # confirm communication first
+- tapOn: "Yuk joʻnatildi"             # "Goods sent" button → confirm dialog
+- assertVisible: ".*tasdiqlaysizmi.*" # «Yuk joʻnatilganini tasdiqlaysizmi?»
+- tapOn: "Yuk joʻnatildi"             # confirm in the dialog
+- assertVisible: "Yoʻlda"             # order moved to «In transit»

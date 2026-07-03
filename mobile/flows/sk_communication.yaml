@@ -1,7 +1,8 @@
-# SK-12: open an IN_WORK order → mark "contacted the driver".
+# SK-12: open an IN_WORK order → mark driver communication status.
 # Params: WAREHOUSE_PHONE, WAREHOUSE_PASSWORD, TAB, ORDER_NO.
-# NOTE: blocked on the current app build (BUG-012: communication POST → 400).
-# Ready for the next build with the fixed contract.
+# BUG-012 fixed: the dialog «Haydovchi bilan bogʻlandingizmi?» now offers the real
+# enum — Tasdiqlandi (CONFIRMED) / Rad etildi (DECLINED) / Aloqasiz (UNAVAILABLE) /
+# Bogʻlanish (PENDING); POST /communication → 204.
 appId: ${APP_ID}
 ---
 - runFlow:
@@ -12,5 +13,5 @@ appId: ${APP_ID}
 - tapOn: ${TAB}
 - tapOn: ${ORDER_NO}
 - tapOn: "Haydovchi bilan aloqa"      # communication row
-- tapOn: "Ha, gaplashdik"             # "Yes, we talked"
-- assertVisible: "Aloqa qilindi"      # status flips to "contacted"
+- tapOn: "Tasdiqlandi"                # CONFIRMED
+- assertVisible: "Tasdiqlandi"        # communication status flips to «Tasdiqlandi»

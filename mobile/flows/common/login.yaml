@@ -5,6 +5,18 @@ appId: ${APP_ID}
 ---
 - launchApp:
     clearState: true
+    permissions:
+      all: allow                 # pre-grant so no runtime permission prompt blocks login
+# Android 13 may still show the POST_NOTIFICATIONS prompt on a fresh install —
+# dismiss it if it appears, then wait for the login screen before typing.
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+- extendedWaitUntil:
+    visible: "00 000 00 00"
+    timeout: 20000
 - tapOn: "00 000 00 00"          # phone field placeholder
 - inputText: ${PHONE}            # national digits only (e.g. 988078176)
 - tapOn: "Parol"                 # password field (label sits over the input)
