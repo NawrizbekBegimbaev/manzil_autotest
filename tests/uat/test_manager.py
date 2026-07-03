@@ -13,12 +13,6 @@ from pages.shipper.storeroom_page import StoreroomPage
 
 pytestmark = [pytest.mark.uat, pytest.mark.manager]
 
-_BLOCKED_ORDER_ACTIONS = (
-    "Приостановлено (BUG-014): действия жизненного цикла заказа (связь с водителем/"
-    "отмена/повторная публикация) переработаны в редизайне веб-UI — на детальной "
-    "странице заказа их больше нет как кнопок/⋮-меню. Обновить POM, когда "
-    "action-UI заказа стабилизируется. См. docs/BUGS.md."
-)
 
 
 @allure.title("MN-01 Вход менеджера")
@@ -58,7 +52,6 @@ def test_mn05_dispatcher(manager_page, cfg):
 
 
 @allure.title("MN-06 Связь с водителем по заявке в работе")
-@pytest.mark.xfail(reason=_BLOCKED_ORDER_ACTIONS, strict=False, run=False)
 def test_mn06_communication(manager_page, cfg, seeder):
     o = seeder.order("in_work")
     page = CommunicationPage(manager_page, cfg).open()
@@ -78,7 +71,6 @@ def test_mn07_view_offers(manager_page, cfg, seeder):
 
 
 @allure.title("MN-08 Отмена заявки")
-@pytest.mark.xfail(reason=_BLOCKED_ORDER_ACTIONS, strict=False, run=False)
 def test_mn08_cancel(manager_page, cfg, seeder):
     o = seeder.order("selected")
     page = StoreroomPage(manager_page, cfg).open()
@@ -88,7 +80,6 @@ def test_mn08_cancel(manager_page, cfg, seeder):
 
 
 @allure.title("MN-09 Повторная публикация отменённой заявки")
-@pytest.mark.xfail(reason=_BLOCKED_ORDER_ACTIONS, strict=False, run=False)
 def test_mn09_republish(manager_page, cfg, seeder):
     o = seeder.order("selected")
     seeder.cancel(o["id"])

@@ -29,7 +29,9 @@ def cfg() -> Settings:
 @pytest.fixture(scope="session")
 def context_kwargs(cfg: Settings) -> dict:
     return {
-        "viewport": {"width": 1440, "height": 900},
+        # 1920 wide so the DataGrid «Операции» column (row ⋮ action menu) renders —
+        # at 1440 the grid horizontally virtualizes it away and row actions vanish.
+        "viewport": {"width": 1920, "height": 1080},
         "locale": cfg.locale,
         "timezone_id": cfg.timezone,
         "ignore_https_errors": True,
