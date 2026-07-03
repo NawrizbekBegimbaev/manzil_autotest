@@ -67,19 +67,16 @@ def test_sk04_create_fill(provisioned):
 
 
 @allure.title("SK-05 Добавление адреса отправления")
-@pytest.mark.xfail(reason=_BLOCKED, strict=False, run=False)
 def test_sk05_from_address(provisioned):
     run_flow("02_warehouse_create_order.yaml", **_wh(provisioned))
 
 
 @allure.title("SK-06 Добавление адреса назначения")
-@pytest.mark.xfail(reason=_BLOCKED, strict=False, run=False)
 def test_sk06_to_address(provisioned):
     run_flow("02_warehouse_create_order.yaml", **_wh(provisioned))
 
 
 @allure.title("SK-07 Создание и публикация заявки")
-@pytest.mark.xfail(reason=_BLOCKED, strict=False, run=False)
 def test_sk07_create_publish(provisioned):
     run_flow("02_warehouse_create_order.yaml", **_wh(provisioned))
 

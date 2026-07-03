@@ -1,12 +1,13 @@
-# M2. Warehouse operator creates an order (ariza) — the mobile-only step.
-# VALIDATED end-to-end against the staging app (Uzbek UI): publishes a real order
-# (e.g. QOFK-00001). The order number prefix comes from the shipper company.
+# M2. Warehouse operator creates + publishes an order (ariza) — mobile-only step.
+# Updated for the fixed address UI (BUG-011 resolved in the build): the address
+# sheet now has a saved-address list + «Oʻz manzilingizni qoʻshish» → a form with
+# Davlat (Xitoy/Qirgʻiziston) + a CITY SEARCH (picks a real city → cityId) + free
+# «Aniq manzil». This finally sends cityId, so POST /warehouse/locations succeeds.
 #
-# Route addresses are saved server-side per account: the first order adds them
-# inline ("Manzil qoʻshish": Shahar/Davlat/Tuman are free-text); later orders
-# default to the saved from/to warehouses. The conditionals below add an address
-# only when its placeholder is still showing, so the flow works on a fresh account
-# AND on one that already has warehouses. Loading date defaults to today.
+# Route addresses save server-side per account: a fresh account shows the
+# placeholders «Yuklash manzili»/«Yetkazib berish manzili» and we add an address;
+# an account that already has saved warehouses defaults to them (the add block is
+# skipped via `when:`). Loading date defaults to today.
 appId: ${APP_ID}
 ---
 - runFlow:
@@ -20,41 +21,43 @@ appId: ${APP_ID}
 - tapOn: "BIG 800"               # vehicle type chip
 - tapOn: "1 haydovchi"           # drivers count
 
-# --- Loading (from) address — add only if not already set ---
-# Tap the EDITTEXT below each label (tapping the label itself doesn't focus the
-# field on this build); hide the keyboard before "Qoʻshish" — it sits under it.
+# --- Loading (from) address — add only if the placeholder is still shown ---
 - runFlow:
     when:
       visible: "Yuklash manzili"
     commands:
       - tapOn: "Yuklash manzili"
-      - tapOn: "Shahar"
-      - inputText: "Tashkent"
+      - tapOn: "Oʻz manzilingizni qoʻshish"   # add a new address
+      - tapOn: "Xitoy"                        # country: China
+      - tapOn: "Shaharni qidirish"            # city search field
+      - inputText: "Beijing"
+      - extendedWaitUntil:
+          visible: "北京市 • bei jing"
+          timeout: 10000
+      - tapOn: "北京市 • bei jing"             # pick the city from search results
+      - tapOn: "Koʻcha, uy, xonadon"          # exact address field
+      - inputText: "Loading street 1"
       - hideKeyboard
-      - tapOn: "Davlat"
-      - inputText: "Uzbekistan"
-      - hideKeyboard
-      - tapOn: "Tuman / manzil"
-      - inputText: "Sayyod 1"
-      - hideKeyboard
-      - tapOn: "Qoʻshish"
+      - tapOn: "Manzilni saqlash"             # save → address added to the route
 
-# --- Delivery (to) address — add only if not already set ---
+# --- Delivery (to) address — same, only if its placeholder is still shown ---
 - runFlow:
     when:
       visible: "Yetkazib berish manzili"
     commands:
       - tapOn: "Yetkazib berish manzili"
-      - tapOn: "Shahar"
+      - tapOn: "Oʻz manzilingizni qoʻshish"
+      - tapOn: "Xitoy"
+      - tapOn: "Shaharni qidirish"
       - inputText: "Beijing"
+      - extendedWaitUntil:
+          visible: "北京市 • bei jing"
+          timeout: 10000
+      - tapOn: "北京市 • bei jing"
+      - tapOn: "Koʻcha, uy, xonadon"
+      - inputText: "Delivery street 2"
       - hideKeyboard
-      - tapOn: "Davlat"
-      - inputText: "China"
-      - hideKeyboard
-      - tapOn: "Tuman / manzil"
-      - inputText: "Chaoyang 1"
-      - hideKeyboard
-      - tapOn: "Qoʻshish"
+      - tapOn: "Manzilni saqlash"
 
 # --- Review + publish ---
 - tapOn: "Koʻrib chiqish"        # review
