@@ -27,7 +27,15 @@ class CitiesPage(BasePage):
         cities list is a GLOBAL platform reference with no per-row delete, so tests
         verify the add form and cancel (submitting would pollute shared data)."""
         self.add_button.first.wait_for(state="visible")
-        self.add_button.first.click()
+        # Occasionally the first click doesn't open the dialog (re-render race) —
+        # retry once before failing.
+        for _ in range(2):
+            self.add_button.first.click()
+            try:
+                self.dialog.wait_for(state="visible", timeout=5000)
+                return self
+            except Exception:
+                continue
         self.dialog.wait_for(state="visible")
         return self
 
