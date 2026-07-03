@@ -5,12 +5,14 @@ provisioned warehouse account; order preconditions are API-seeded. Skipped when
 no emulator/Maestro is available (so the web-only daily run still produces a
 report — these show as «Не автоматизирован»).
 
-BLOCKER (SK-05/06/07): the warehouse app 1.1.1-staging cannot add a route
-address — its "Manzil qoʻshish" form POSTs /warehouse/locations with free-text
-cityName+country, but the backend now requires cityId (the cityName+country
-branch returns 400 BAD_REQUEST «Noto'g'ri so'rov»). Operators therefore cannot
-create/publish an order through the UI. These three cases are marked xfail until
-a new app build (with a city picker) ships. See docs/BUGS.md → BUG-011.
+BUG-011 (адрес) — ИСПРАВЛЕН в билде: экран адреса теперь Davlat + поиск города
+(→ cityId) + свободный адрес, POST /warehouse/locations идёт с cityId → 201.
+SK-05/06/07 (создание/публикация) снова автоматизированы и зелёные.
+
+BUG-012 (связь, SK-12/13) — ВСЁ ЕЩЁ ОТКРЫТ: приложение шлёт
+POST /warehouse/orders/{id}/communication телом 16 байт (status=YES?) → 400
+«Noto'g'ri so'rov» (перепроверено 2026-07-03); backend ждёт status=CONFIRMED.
+Отметка связи и далее отправка груза через UI невозможны до фикса. См. docs/BUGS.md.
 """
 
 from __future__ import annotations
@@ -22,11 +24,6 @@ from utils.maestro import emulator_ready, run_flow
 
 pytestmark = [pytest.mark.uat, pytest.mark.warehouse]
 
-_BLOCKED = (
-    "Заблокировано BUG-011: приложение склада 1.1.1-staging шлёт адрес как "
-    "cityName+country, backend требует cityId → 400. Создание заявки через UI "
-    "невозможно до нового билда."
-)
 _BLOCKED_COMM = (
     "Заблокировано BUG-012: приложение склада 1.1.1-staging шлёт "
     "POST /warehouse/orders/{id}/communication c неверным телом (16 байт, "
