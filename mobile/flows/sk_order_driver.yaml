@@ -7,10 +7,8 @@ appId: ${APP_ID}
     env:
       PHONE: ${WAREHOUSE_PHONE}
       PASSWORD: ${WAREHOUSE_PASSWORD}
-- scrollUntilVisible:
-    element:
-      text: ${TAB}
-    direction: RIGHT
+- extendedWaitUntil:
+    visible: ${TAB}
     timeout: 10000
 - tapOn: ${TAB}
 - tapOn: ${ORDER_NO}
