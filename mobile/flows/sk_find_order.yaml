@@ -7,9 +7,18 @@ appId: ${APP_ID}
     env:
       PHONE: ${WAREHOUSE_PHONE}
       PASSWORD: ${WAREHOUSE_PASSWORD}
-# Wait for the status tab to be present (home just finished loading), then open it.
+# Status tabs are a horizontal strip; with many orders they overflow and the last
+# one («Tugallangan») sits off-screen right. If the target tab isn't visible, swipe
+# the tab strip left to reveal it (only then — so leftmost tabs aren't pushed away).
+- runFlow:
+    when:
+      notVisible: ${TAB}
+    commands:
+      - swipe:
+          start: "85%, 8%"
+          end: "12%, 8%"
 - extendedWaitUntil:
     visible: ${TAB}
-    timeout: 10000
+    timeout: 8000
 - tapOn: ${TAB}
 - assertVisible: ${ORDER_NO}

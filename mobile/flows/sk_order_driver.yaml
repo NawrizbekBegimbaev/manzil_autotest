@@ -7,9 +7,16 @@ appId: ${APP_ID}
     env:
       PHONE: ${WAREHOUSE_PHONE}
       PASSWORD: ${WAREHOUSE_PASSWORD}
+- runFlow:
+    when:
+      notVisible: ${TAB}
+    commands:
+      - swipe:
+          start: "85%, 8%"
+          end: "12%, 8%"
 - extendedWaitUntil:
     visible: ${TAB}
-    timeout: 10000
+    timeout: 8000
 - tapOn: ${TAB}
 - tapOn: ${ORDER_NO}
 # Detail header shows internal "ID" not the display number, so assert the driver
