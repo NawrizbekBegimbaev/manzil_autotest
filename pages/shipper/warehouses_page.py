@@ -45,7 +45,7 @@ class WarehousesPage(BasePage):
         self.search(text)
         row = self.row(text).first
         row.wait_for(state="visible")
-        row.get_by_role("button", name="Удалить").click()
+        self.activate(row.get_by_role("button", name="Удалить"))  # in-grid icon → keyboard
         self.page.get_by_role("dialog").get_by_role("button", name="Удалить").click()
         row.wait_for(state="detached")
         return self

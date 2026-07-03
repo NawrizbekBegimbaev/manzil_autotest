@@ -16,17 +16,6 @@ from utils.data import StaffData
 
 pytestmark = [pytest.mark.uat, pytest.mark.admin]
 
-# Справочник городов на staging переводят на новую логику (глобальный справочник
-# Страна/Уровень/Путь, добавление города переработано). Форма склада использует
-# выбор города из этого справочника, поэтому её POM временно не соответствует UI.
-# Приостановлено по решению: снять xfail и обновить POM, когда логика городов
-# стабилизируется. См. docs/BUGS.md → BUG-013.
-_BLOCKED_CITY_UI = (
-    "Приостановлено (BUG-013): на staging меняется логика справочника городов "
-    "(редизайн, добавление города переработано); выбор города в форме склада не "
-    "совпадает с текущим POM. Ждём стабилизации UI."
-)
-
 
 @allure.title("AD-01 Вход администратора грузоотправителя")
 def test_ad01_login(admin_page):
@@ -150,7 +139,6 @@ def test_ad13_warehouses_list(admin_page, cfg):
 
 
 @allure.title("AD-14 Добавление склада")
-@pytest.mark.xfail(reason=_BLOCKED_CITY_UI, strict=False, run=False)
 def test_ad14_add_warehouse(admin_page, cfg):
     from utils.data import SANITY_MARKER, _letters
     page = WarehousesPage(admin_page, cfg).open()
@@ -164,7 +152,6 @@ def test_ad14_add_warehouse(admin_page, cfg):
 
 
 @allure.title("AD-15 Редактирование и удаление склада")
-@pytest.mark.xfail(reason=_BLOCKED_CITY_UI, strict=False, run=False)
 def test_ad15_delete_warehouse(admin_page, cfg):
     from utils.data import SANITY_MARKER, _letters
     page = WarehousesPage(admin_page, cfg).open()
