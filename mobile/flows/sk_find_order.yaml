@@ -7,5 +7,12 @@ appId: ${APP_ID}
     env:
       PHONE: ${WAREHOUSE_PHONE}
       PASSWORD: ${WAREHOUSE_PASSWORD}
+# The status tabs are a horizontal strip; the last one («Tugallangan») can sit
+# off-screen — scroll it into view first, then open it.
+- scrollUntilVisible:
+    element:
+      text: ${TAB}
+    direction: RIGHT
+    timeout: 10000
 - tapOn: ${TAB}
 - assertVisible: ${ORDER_NO}

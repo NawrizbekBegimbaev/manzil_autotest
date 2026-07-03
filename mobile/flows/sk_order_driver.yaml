@@ -7,6 +7,11 @@ appId: ${APP_ID}
     env:
       PHONE: ${WAREHOUSE_PHONE}
       PASSWORD: ${WAREHOUSE_PASSWORD}
+- scrollUntilVisible:
+    element:
+      text: ${TAB}
+    direction: RIGHT
+    timeout: 10000
 - tapOn: ${TAB}
 - tapOn: ${ORDER_NO}
 # Detail header shows internal "ID" not the display number, so assert the driver
