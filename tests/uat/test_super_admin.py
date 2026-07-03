@@ -202,21 +202,20 @@ def test_sa15_edit_delete_driver(super_admin_page, cfg):
     expect(page.row(new_name)).to_have_count(0)
 
 
-@allure.title("SA-16 Просмотр и добавление города")
-@pytest.mark.xfail(
-    reason="Приостановлено (BUG-013): страница «Города» на staging переработана в "
-    "глобальный справочник (Страна/Уровень/Путь), кнопки «Добавить» нет — логика "
-    "добавления города меняется. Обновить POM после стабилизации UI. См. docs/BUGS.md.",
-    strict=False, run=False)
+@allure.title("SA-16 Просмотр городов и форма добавления")
 def test_sa16_add_city(super_admin_page, cfg):
+    # «Города» — глобальный справочник платформы без удаления по строке, поэтому
+    # проверяем НЕразрушающе: страница открывается, форма «Новое административное
+    # деление» (Код / Название / Пиньинь) доступна; закрываем без сохранения,
+    # чтобы не засорять общий справочник.
     page = CitiesPage(super_admin_page, cfg).open()
     expect(super_admin_page.get_by_role("heading", name="Города").first).to_be_visible()
-    data = CityData()
-    page.add(data.name, data.country)
-    try:
-        expect(page.row(data.name).first).to_be_visible()
-    finally:
-        page.delete_row(data.name)
+    expect(super_admin_page.locator('[role="grid"], table').first).to_be_visible()
+    page.open_add()
+    expect(page.dialog).to_be_visible()
+    expect(page.dialog).to_contain_text("административное деление")
+    expect(page.dialog.get_by_role("textbox")).to_have_count(3)
+    page.cancel()
 
 
 @allure.title("SA-17 Просмотр и добавление типа транспорта")
