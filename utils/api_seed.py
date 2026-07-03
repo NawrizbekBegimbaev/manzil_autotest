@@ -124,6 +124,7 @@ class ApiSeed:
     def order(self, status: str = "published") -> dict:
         """Seed an order; status ∈ {published, quoted, selected}. Returns dict with
         id, displayNumber, offerId (when quoted/selected)."""
+        self._tokens.clear()  # fresh auth per seed — cached tokens expire in a long run (→ 401)
         self._ensure_refs()
         wh = self._login(self.creds.warehouse_phone, "WAREHOUSE_APP")
         body = {
