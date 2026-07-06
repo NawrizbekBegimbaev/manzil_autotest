@@ -22,26 +22,31 @@ class CitiesPage(BasePage):
         self.goto(CITIES_PATH)
         return self
 
+    @property
+    def add_dialog(self):
+        """The freshly opened dialog (last one) — avoids matching a stray dialog
+        left visible by an earlier test on the shared session page."""
+        return self.page.get_by_role("dialog").last
+
     def open_add(self) -> "CitiesPage":
         """Open the «Новое административное деление» dialog. Non-destructive: the
         cities list is a GLOBAL platform reference with no per-row delete, so tests
         verify the add form and cancel (submitting would pollute shared data)."""
         self.add_button.first.wait_for(state="visible")
-        # Occasionally the first click doesn't open the dialog (re-render race) —
-        # retry once before failing.
-        for _ in range(2):
+        self.add_button.first.click()
+        try:
+            self.add_dialog.wait_for(state="visible", timeout=8000)
+        except Exception:
+            # click may have missed / a stray overlay swallowed it — clear and retry
+            self.page.keyboard.press("Escape")
+            self.page.wait_for_timeout(300)
             self.add_button.first.click()
-            try:
-                self.dialog.wait_for(state="visible", timeout=5000)
-                return self
-            except Exception:
-                continue
-        self.dialog.wait_for(state="visible")
+            self.add_dialog.wait_for(state="visible", timeout=8000)
         return self
 
     def cancel(self) -> "CitiesPage":
-        self.dialog.get_by_role("button", name="Отмена").click()
-        self.dialog.wait_for(state="hidden")
+        self.add_dialog.get_by_role("button", name="Отмена").click()
+        self.add_dialog.wait_for(state="hidden")
         return self
 
     def add(self, code: str, name: str, pinyin: str) -> "CitiesPage":

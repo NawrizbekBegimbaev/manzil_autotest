@@ -212,9 +212,11 @@ def test_sa16_add_city(super_admin_page, cfg):
     expect(super_admin_page.get_by_role("heading", name="Города").first).to_be_visible()
     expect(super_admin_page.locator('[role="grid"], table').first).to_be_visible()
     page.open_add()
-    expect(page.dialog).to_be_visible()
-    expect(page.dialog).to_contain_text("административное деление")
-    expect(page.dialog.get_by_role("textbox")).to_have_count(3)
+    # target the freshly opened dialog (.last) — a stray dialog from an earlier
+    # test on the shared session page could otherwise be matched under load.
+    expect(page.add_dialog).to_be_visible()
+    expect(page.add_dialog.get_by_role("textbox")).to_have_count(3)  # Код / Название / Пиньинь
+    expect(page.add_dialog).to_contain_text("административное деление")
     page.cancel()
 
 
