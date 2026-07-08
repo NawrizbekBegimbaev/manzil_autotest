@@ -225,11 +225,11 @@ def test_sa17_add_vehicle_type(super_admin_page, cfg):
     page = VehicleTypesPage(super_admin_page, cfg).open()
     expect(super_admin_page.get_by_role("heading", name="Типы транспорта").first).to_be_visible()
     data = VehicleTypeData()
-    page.add(data.name)
+    page.add(data)
     try:
-        expect(page.row(data.name).first).to_be_visible()
+        expect(page.row(data.size).first).to_be_visible()
     finally:
-        page.delete_row(data.name)
+        page.delete_row(data.size)
 
 
 @allure.title("SA-18 Созданный администратор компании может войти")

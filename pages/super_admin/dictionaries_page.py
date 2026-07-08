@@ -91,10 +91,13 @@ class VehicleTypesPage(BasePage):
         self.goto(VEHICLE_TYPES_PATH)
         return self
 
-    def add(self, name: str) -> "VehicleTypesPage":
+    def add(self, data) -> "VehicleTypesPage":
         self.add_button.click()
         self.dialog.wait_for(state="visible")
-        self.dialog.get_by_role("textbox").first.fill(name)
+        # Категория * (dropdown) then Размер * (numeric textbox) — both required.
+        self.dialog.get_by_role("combobox").first.click()
+        self.page.get_by_role("option", name=data.category, exact=True).click()
+        self.dialog.get_by_role("textbox").first.fill(data.size)
         self.dialog.get_by_role("button", name="Добавить", exact=True).click()
         self.dialog.wait_for(state="hidden")
         return self

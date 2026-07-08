@@ -84,7 +84,10 @@ class CityData:
 
 @dataclass
 class VehicleTypeData:
-    name: str = field(default_factory=lambda: f"{SANITY_MARKER}-VT-{_letters(5)}")
+    # The dialog now requires a Категория (fixed dropdown) + Размер (numeric).
+    # Size is randomised per run so the created row is unique and self-cleanable.
+    category: str = "Фургон"
+    size: str = field(default_factory=lambda: f"{random.randint(20, 99)}.{random.randint(10, 99)}")
 
 
 @dataclass
