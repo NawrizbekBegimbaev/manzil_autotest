@@ -18,7 +18,7 @@ appId: ${APP_ID}
 
 - tapOn: "Ariza yaratish"        # create FAB
 - tapOn: "Avtomobil"             # transport type
-- tapOn: "BIG 800"               # vehicle type chip
+- tapOn: "Bortli 13.7"           # vehicle type chip
 - tapOn: "1 haydovchi"           # drivers count
 
 # --- Loading (from) address — add only if the placeholder is still shown ---

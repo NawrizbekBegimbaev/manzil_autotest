@@ -10,5 +10,5 @@ appId: ${APP_ID}
       PASSWORD: ${WAREHOUSE_PASSWORD}
 - tapOn: "Ariza yaratish"     # "+" create FAB
 - tapOn: "Avtomobil"          # transport type: road
-- assertVisible: "BIG 800"          # vehicle-type chips render → the form is open
+- assertVisible: "Bortli 13.7"      # vehicle-type chips render → the form is open
 - assertVisible: "Koʻrib chiqish"   # review button present

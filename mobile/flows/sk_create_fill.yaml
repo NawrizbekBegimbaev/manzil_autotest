@@ -10,7 +10,7 @@ appId: ${APP_ID}
       PASSWORD: ${WAREHOUSE_PASSWORD}
 - tapOn: "Ariza yaratish"
 - tapOn: "Avtomobil"
-- tapOn: "BIG 800"            # vehicle type chip
+- tapOn: "Bortli 13.7"        # vehicle type chip
 - tapOn: "1 haydovchi"        # drivers count
 - assertVisible: ".*Yuklash sanasi.*"   # loading-date field (defaults to today)
 - assertVisible: ".*Yoʻnalish.*"        # route section present → ready to add addresses
