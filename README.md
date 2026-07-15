@@ -1,96 +1,152 @@
-# Manzil — UI Sanity Suite
+# Manzil — QA Automation Suite
 
-Daily UI sanity for **Manzil** (SaaS грузоперевозок UZ↔CN), STAGING. Playwright
-(sync) + pytest, Page Object Model, **UI-only** — никаких HTTP/API-вызовов из
-тестов. Архитектура повторяет образец MyXodim.
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-9.x-0A9EDC?logo=pytest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-web-2EAD33?logo=playwright&logoColor=white)
+![Maestro](https://img.shields.io/badge/Maestro-mobile-FF5C5C)
+![Allure](https://img.shields.io/badge/Allure-reporting-FF6C37)
+![Tests](https://img.shields.io/badge/UAT-100%2F100_green-brightgreen)
 
-## Принципы
+End-to-end QA-автоматизация для **Manzil** — SaaS грузоперевозок по коридору
+**Узбекистан ↔ Китай** (роли: супер-админ, грузоотправитель, склад, менеджер,
+транспортная компания). Один репозиторий покрывает **три слоя продукта**: веб-UI,
+мобильное Android-приложение и backend-API — с ежедневным прогоном, директорским
+отчётом и трекингом дефектов.
 
-- **POM**: класс на страницу, локаторы в `__init__`, методы — действия/геттеры
-  **без ассертов**. Ассерты только в тестах через `expect(...).to_*` (auto-retry).
-- **Без хардкода**: URL, телефоны, пароли, таймауты, Telegram — только из `.env`
-  (`config/settings.py`, pydantic-settings).
-- **Без `networkidle`**: SPA держит живые соединения. Навигация ждёт
-  `domcontentloaded`, готовность проверяем `expect()` по стабильному элементу.
-- **Логин**: телефон + пароль, без OTP. Каждая роль логинится **один раз за
-  прогон** (session-фикстура); контекст переиспользуется. Смена пользователя =
-  смена контекста, не logout через UI.
-- **Локаторы**: `data-testid` почти нет → по `name`/роли/лейблу/плейсхолдеру;
-  списки матчим по URL.
+> Демонстрационный репозиторий инженера по автоматизации тестирования. Реальные
+> учётные данные и токены в репозиторий не попадают (`.env` в `.gitignore`,
+> шаблон — `.env.example`).
 
-## Структура
+---
+
+## 📊 Покрытие
+
+**100 автоматизированных UAT-кейсов**, ежедневный прогон — `100/100 green` (~14 мин).
+
+| Слой | Роль / область | Кейсов | Инструмент |
+|---|---|---:|---|
+| Web UI | Супер-администратор | 18 | Playwright |
+| Web UI | Администратор грузоотправителя | 19 | Playwright |
+| Web UI | Менеджер | 9 | Playwright |
+| Web UI | Транспортная компания | 14 | Playwright |
+| Mobile | Сотрудник склада (Android) | 14 | Maestro |
+| API | Аутентификация + RBAC | 26 | requests |
+| | **Итого** | **100** | |
+
+Помимо автоматизированного набора ведётся **библиотека ручных тест-кейсов** —
+**1497 автоматизируемых** сценариев (API 1008 / Web 370 / Mobile 119), выверенных
+по актуальному билду staging, плюс 41 вынесенный в архив как неавтоматизируемый
+(чистый визуал, a11y, «проверить на устройстве»). Источник истины — JSON, из
+которого собираются Excel-книги (`docs/testcases/`).
+
+---
+
+## 🧱 Стек и подход
+
+- **Python 3.13 + pytest** — ядро, маркеры (`uat`, `sanity`, по ролям), фикстуры.
+- **Playwright (sync)** — веб-UI, **Page Object Model**: класс на страницу,
+  локаторы в `__init__`, методы — действия/геттеры **без ассертов**; ассерты
+  только в тестах через `expect(...)` с авто-ретраем.
+- **Maestro** — мобильное Android-приложение склада (YAML-флоу + pytest-обёртка,
+  запуск на локальном эмуляторе).
+- **requests** — backend-API как система-под-тестом (auth, RBAC, `/me`,
+  ролевые 403-гейты); отдельный клиент, который не бросает на 4xx — ассертит тест.
+- **Allure** — сбор результатов, из них строится директорский XLSX-отчёт.
+- **pydantic-settings** — вся конфигурация из `.env`, **ноль хардкода** (URL,
+  доступы, таймауты, Telegram).
+
+### Инженерные принципы
+
+- **Свежий tenant на прогон.** Компании грузоотправителя/ТК и их сотрудники
+  создаются автоматически (session-фикстура `provisioned`) и удаляются в teardown —
+  прогон изолирован и самоочищается, никакого «мусора» на staging.
+- **API-seed для предусловий.** Заказы в нужном статусе (`published` → `quoted`
+  → `selected` → `in_transit`) поднимаются через API, а не кликами по UI —
+  быстро и детерминированно; ассерты остаются на UI-слое.
+- **Без `networkidle`.** SPA держит живые соединения — готовность проверяется
+  `expect()` по стабильному элементу, а не сетевым простоем.
+- **Логин один раз за прогон** на роль (session-контекст), смена пользователя =
+  смена контекста, а не logout через UI.
+- **Локализация.** Продукт China-first (дефолтный язык интерфейса — китайский);
+  тесты форсируют язык и ассертят по стабильным ключам (`code` в problem+json),
+  а не по локализованному тексту.
+
+---
+
+## 🗂️ Структура репозитория
 
 ```
-config/settings.py          — URL/доступы/TG из .env
-conftest.py                 — cfg, browser_context_args, session-логины по ролям
-pages/base_page.py          — goto, heading
-pages/auth/login_page.py    — форма логина
-pages/super_admin/          — Page Objects по областям
-pages/common/nav_page.py    — обобщённый page-load
-tests/sanity/               — кейсы (по файлу на логическую группу)
-scripts/run_sanity.sh       — ежедневный прогон + сборка XLSX (без отправки)
-scripts/report_telegram.py  — XLSX-отчёт + ручная отправка в Telegram
+config/settings.py           — конфигурация из .env (pydantic-settings)
+conftest.py                  — фикстуры: cfg, session-логины по ролям,
+                               provisioned (свежий tenant), api-клиент
+pages/                       — Page Objects (auth, super_admin, shipper, transport, common)
+tests/uat/                   — UAT-набор (по файлу на роль)
+  test_super_admin.py        — супер-админ (web)
+  test_admin.py              — админ грузоотправителя (web)
+  test_manager.py            — менеджер (web)
+  test_tk.py                 — транспортная компания (web)
+  test_warehouse_mobile.py   — склад (Android/Maestro)
+  test_api_auth_rbac.py      — backend API: auth + RBAC
+utils/
+  api_client.py              — API-клиент (система-под-тестом)
+  api_seed.py                — сидинг заказов для предусловий
+  data.py                    — генераторы уникальных данных, dataclass-ы
+mobile/                      — Maestro: flows/ (YAML), config, scripts
+scripts/
+  run_uat.sh                 — ежедневный прогон + сборка отчёта (--no-send)
+  uat_report.py              — XLSX-отчёт по ролям + доставка в Telegram
+docs/
+  BUGS.md                    — журнал дефектов (причина, коммит-фикс, статус)
+  BUG_REPRO.md               — репро-репорты для разработки
+  PROJECT_REFERENCE.md       — доменная модель, роли, state-машины, RBAC
+  testcases/                 — библиотека тест-кейсов (JSON → xlsx)
 ```
 
-## Установка
+---
+
+## 🚀 Запуск
 
 ```bash
+# окружение
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -e .
 playwright install chromium
-cp .env.example .env   # заполнить BASE_URL и доступы
+
+# конфигурация
+cp .env.example .env      # заполнить SUPER_ADMIN_* и NEW_ACCOUNT_PASSWORD
+
+# весь UAT-набор (web + mobile + api), отчёт локально без отправки
+scripts/run_uat.sh --no-send
+
+# точечно
+pytest -m uat                             # все 100 кейсов
+pytest tests/uat/test_api_auth_rbac.py    # только API (быстро, ~15 c)
+pytest -m tk                              # только транспортная компания
 ```
 
-## Запуск
+Мобильные кейсы требуют Android-эмулятора и Maestro CLI (см.
+`mobile/` и `docs/PROJECT_REFERENCE.md`).
 
-```bash
-pytest -m sanity                       # весь набор
-pytest -m "sanity and smoke"           # только page-load смоки
-pytest tests/sanity/test_auth.py       # отдельный файл
-scripts/run_sanity.sh                  # ежедневный прогон + локальный XLSX
-allure serve allure-results            # просмотр отчёта
-```
+---
 
-## Отчёт в Telegram (ручная отправка)
+## 📈 Отчётность и трекинг дефектов
 
-`run_sanity.sh` отчёт **не отправляет** — только собирает `reports/sanity-report.xlsx`.
-После разбора падений (реальные баги, а не косяки тестов) отправляем вручную:
+- **Директорский отчёт** (`scripts/uat_report.py`) — XLSX со сводкой по ролям и
+  листом на каждую роль; статус каждого кейса берётся из последнего прогона
+  (Allure). Опциональная доставка в Telegram.
+- **Блокирующие баги** помечаются `xfail(run=False)` — прогон остаётся зелёным,
+  а в отчёте кейс показан как «Заблокирован (баг)», а не «Провален».
+- **Журнал дефектов** (`docs/BUGS.md`) ведётся как история: симптом → корень в
+  коде → коммит-фикс → привязка к ID кейсов. Для разработки — отдельные
+  репро-репорты (`docs/BUG_REPRO.md`) с шагами и доказательствами (ответы API, логи).
 
-```bash
-.venv/bin/python scripts/report_telegram.py
-```
+---
 
-Если `TG_BOT_TOKEN`/`TG_CHAT_ID` пусты — отправка молча пропускается, XLSX
-всё равно пишется.
+## 🎯 Что демонстрирует проект
 
-## Роли и self-provisioning
-
-`SUPER_ADMIN` → `/super-admin/...`, `ADMIN` → `/dashboard`,
-`MANAGER` → `/shipper/storeroom`, `CARRIER` → `/transport/orders`.
-
-В `.env` нужен **только SUPER_ADMIN** (телефон+пароль) и `NEW_ACCOUNT_PASSWORD`.
-Остальные роли набор **создаёт сам** в session-фикстуре `provisioned`:
-SUPER_ADMIN создаёт грузоотправителя (→ ADMIN-логин) и транспортную компанию
-(→ CARRIER-логин), а ADMIN создаёт сотрудника-«Менеджера» (→ MANAGER-логин).
-Под каждым логинимся в отдельном контексте; в конце прогона арендаторы удаляются
-(каскадом со своими сотрудниками). Все созданные сущности помечены `SANITY`.
-
-## Покрытие (21 кейс)
-
-1–4 логины ролей · 5–9 страницы SUPER_ADMIN · 10–11 создание грузоотправителя/
-трак-компании (с очисткой) · 12–17 страницы ADMIN · 18–19 MANAGER · 20–21 CARRIER.
-Создание заявки — только в мобильном приложении (`mobile/`, Maestro/Android).
-
-## Сквозной тендер (mobile → web)
-
-`scripts/run_tender_e2e.sh` — оркестратор: SUPER_ADMIN провижит грузоотправителя
-(+ склад-сотрудника для мобайла) и перевозчика → **мобайл публикует заявку**
-(Maestro) → **веб-перевозчик** находит её в ленте и предлагает цену → **веб-
-грузоотправитель** принимает (выбор победителя) → арендаторы удаляются. Нужен
-запущенный эмулятор с APK. См. `mobile/README.md`.
-
-## Язык интерфейса
-
-Staging может отдавать дефолт zh/uz. Ассерты — на русском, поэтому контекст
-принудительно ставит `localStorage['__tolgee_currentLanguage']='ru'` (init-script
-в `conftest.py`) — UI всегда русский, детерминированно.
+- Автоматизацию **трёх разных слоёв** (web / mobile / API) в едином наборе.
+- Проектирование поддерживаемой архитектуры (POM, фикстуры, изоляция данных).
+- Работу с **RBAC и безопасностью** на уровне API (ролевые/capability 403-гейты,
+  проверка контрактов, wrong-app, refresh-ротация).
+- Полный QA-цикл: тест-дизайн (1497 кейсов) → автоматизация → прогон →
+  отчётность для менеджмента → трекинг и верификация фиксов.

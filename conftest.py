@@ -191,3 +191,24 @@ def seeder(provisioned: TenantCreds, cfg: Settings):
     from utils.api_seed import ApiSeed
 
     return ApiSeed(cfg, provisioned)
+
+
+@pytest.fixture(scope="session")
+def api(cfg: Settings):
+    """General API client (system-under-test for the API UAT cases)."""
+    from utils.api_client import ApiClient
+
+    return ApiClient(cfg)
+
+
+@pytest.fixture(scope="session")
+def api_roles(provisioned: TenantCreds, cfg: Settings) -> dict:
+    """(phone, password, clientType) per role, from the freshly provisioned tenant
+    plus the super-admin creds. Keys map to the roles the suite can produce."""
+    return {
+        "super_admin": (cfg.super_admin_phone, cfg.super_admin_password, "WEB"),
+        "shipper_admin": (provisioned.admin_phone, provisioned.password, "WEB"),
+        "shipper_manager": (provisioned.manager_phone, provisioned.password, "WEB"),
+        "shipper_warehouse": (provisioned.warehouse_phone, provisioned.password, "WAREHOUSE_APP"),
+        "transport_admin": (provisioned.carrier_phone, provisioned.password, "TRANSPORT_COMPANY_APP"),
+    }

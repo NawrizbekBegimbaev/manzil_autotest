@@ -1,0 +1,210 @@
+[
+ {
+  "id": "API-AUTH-001",
+  "screen": "POST /auth/login",
+  "scenario": "Логин SUPER_ADMIN через WEB",
+  "steps": "1. POST /auth/login {clientType:'WEB'} с верными кредами супер-админа.",
+  "priority": "Высокий",
+  "expected": "200 OK, выданы accessToken и refreshToken."
+ },
+ {
+  "id": "API-AUTH-002",
+  "screen": "POST /auth/login",
+  "scenario": "Логин SHIPPER_ADMIN через WEB",
+  "steps": "1. POST /auth/login {clientType:'WEB'} кредами админа грузоотправителя.",
+  "priority": "Высокий",
+  "expected": "200 OK, токены выданы."
+ },
+ {
+  "id": "API-AUTH-003",
+  "screen": "POST /auth/login",
+  "scenario": "Логин SHIPPER_MANAGER через WEB",
+  "steps": "1. POST /auth/login {clientType:'WEB'} кредами менеджера.",
+  "priority": "Высокий",
+  "expected": "200 OK, токены выданы."
+ },
+ {
+  "id": "API-AUTH-007",
+  "screen": "POST /auth/login",
+  "scenario": "Логин TRANSPORT_ADMIN через TRANSPORT_COMPANY_APP",
+  "steps": "1. POST /auth/login {clientType:'TRANSPORT_COMPANY_APP'} кредами ТК.",
+  "priority": "Высокий",
+  "expected": "200 OK, токены выданы."
+ },
+ {
+  "id": "API-AUTH-008",
+  "screen": "POST /auth/login",
+  "scenario": "Логин SHIPPER_WAREHOUSE через WAREHOUSE_APP",
+  "steps": "1. POST /auth/login {clientType:'WAREHOUSE_APP'} кредами склада.",
+  "priority": "Высокий",
+  "expected": "200 OK, токены выданы."
+ },
+ {
+  "id": "API-AUTH-009",
+  "screen": "POST /auth/login",
+  "scenario": "Wrong-app: SHIPPER_WAREHOUSE через WEB",
+  "steps": "1. POST /auth/login кредами склада, но clientType='WEB'.",
+  "priority": "Высокий",
+  "expected": "403, code='error.wrong-app' — приложение не для этой роли."
+ },
+ {
+  "id": "API-AUTH-014",
+  "screen": "POST /auth/login",
+  "scenario": "Wrong-app: TRANSPORT_ADMIN через WAREHOUSE_APP",
+  "steps": "1. POST /auth/login кредами ТК, clientType='WAREHOUSE_APP'.",
+  "priority": "Средний",
+  "expected": "403, code='error.wrong-app'."
+ },
+ {
+  "id": "API-AUTH-015",
+  "screen": "POST /auth/login",
+  "scenario": "Wrong-app: SUPER_ADMIN через WAREHOUSE_APP",
+  "steps": "1. POST /auth/login кредами супер-админа, clientType='WAREHOUSE_APP'.",
+  "priority": "Средний",
+  "expected": "403, code='error.wrong-app'."
+ },
+ {
+  "id": "API-AUTH-018",
+  "screen": "POST /auth/login",
+  "scenario": "Неверный пароль",
+  "steps": "1. POST /auth/login с верным телефоном и неверным паролем.",
+  "priority": "Высокий",
+  "expected": "401, code='error.invalid-credentials'."
+ },
+ {
+  "id": "API-AUTH-033",
+  "screen": "POST /auth/login",
+  "scenario": "Валидация: clientType отсутствует",
+  "steps": "1. POST /auth/login без поля clientType.",
+  "priority": "Средний",
+  "expected": "400, code='BAD_REQUEST', errors[] содержит поле clientType."
+ },
+ {
+  "id": "API-AUTH-034",
+  "screen": "POST /auth/login",
+  "scenario": "Валидация: неизвестный clientType enum",
+  "steps": "1. POST /auth/login с clientType='NOT_A_REAL_APP'.",
+  "priority": "Средний",
+  "expected": "400, code='BAD_REQUEST' (enum не десериализуется)."
+ },
+ {
+  "id": "API-AUTH-079",
+  "screen": "GET /me",
+  "scenario": "GET /me без токена",
+  "steps": "1. GET /me без заголовка Authorization.",
+  "priority": "Высокий",
+  "expected": "401, code='UNAUTHORIZED'."
+ },
+ {
+  "id": "API-AUTH-080",
+  "screen": "GET /me",
+  "scenario": "GET /me с битым Bearer",
+  "steps": "1. GET /me с Authorization: Bearer <мусор>.",
+  "priority": "Высокий",
+  "expected": "401 (невалидная подпись отклоняется до контроллера)."
+ },
+ {
+  "id": "API-AUTH-051",
+  "screen": "POST /auth/refresh",
+  "scenario": "Обновление токена — happy path (ротация)",
+  "steps": "1. Залогиниться. 2. POST /auth/refresh с полученным refreshToken.",
+  "priority": "Высокий",
+  "expected": "200 OK, новая пара accessToken/refreshToken."
+ },
+ {
+  "id": "API-AUTH-054",
+  "screen": "POST /auth/refresh",
+  "scenario": "Битый/поддельный refresh",
+  "steps": "1. POST /auth/refresh с невалидным refreshToken.",
+  "priority": "Средний",
+  "expected": "401, code='error.invalid-credentials'."
+ },
+ {
+  "id": "API-AUTH-055",
+  "screen": "POST /auth/refresh",
+  "scenario": "Валидация: refreshToken пустой",
+  "steps": "1. POST /auth/refresh с refreshToken=''.",
+  "priority": "Средний",
+  "expected": "400, code='BAD_REQUEST', errors[] содержит refreshToken."
+ },
+ {
+  "id": "API-AUTH-065",
+  "screen": "GET /me",
+  "scenario": "GET /me под SUPER_ADMIN",
+  "steps": "1. Логин SUPER_ADMIN. 2. GET /me.",
+  "priority": "Высокий",
+  "expected": "200, role=SUPER_ADMIN, effectiveCapabilities=[], company отсутствует."
+ },
+ {
+  "id": "API-AUTH-066",
+  "screen": "GET /me",
+  "scenario": "GET /me под SHIPPER_ADMIN (capabilities = ALL)",
+  "steps": "1. Логин SHIPPER_ADMIN. 2. GET /me.",
+  "priority": "Высокий",
+  "expected": "200, role=SHIPPER_ADMIN, есть company, capabilities включают ORDER_ENTRY и REPORTS."
+ },
+ {
+  "id": "API-AUTH-067",
+  "screen": "GET /me",
+  "scenario": "GET /me под SHIPPER_MANAGER (без ORDER_ENTRY)",
+  "steps": "1. Логин SHIPPER_MANAGER. 2. GET /me.",
+  "priority": "Высокий",
+  "expected": "200, role=SHIPPER_MANAGER, capabilities непустые и НЕ содержат ORDER_ENTRY."
+ },
+ {
+  "id": "API-AUTH-070",
+  "screen": "GET /me",
+  "scenario": "GET /me под SHIPPER_WAREHOUSE (capabilities = {ORDER_ENTRY})",
+  "steps": "1. Логин SHIPPER_WAREHOUSE. 2. GET /me.",
+  "priority": "Высокий",
+  "expected": "200, role=SHIPPER_WAREHOUSE, capabilities содержат ORDER_ENTRY."
+ },
+ {
+  "id": "API-AUTH-071",
+  "screen": "GET /me",
+  "scenario": "GET /me под TRANSPORT_ADMIN (capabilities = NONE)",
+  "steps": "1. Логин TRANSPORT_ADMIN. 2. GET /me.",
+  "priority": "Средний",
+  "expected": "200, role=TRANSPORT_ADMIN, есть company, effectiveCapabilities=[]."
+ },
+ {
+  "id": "API-RBAC-006",
+  "screen": "GET /shipper/reports/orders",
+  "scenario": "SHIPPER_MANAGER без REPORTS → отказ",
+  "steps": "1. Логин SHIPPER_MANAGER. 2. GET /shipper/reports/orders.",
+  "priority": "Высокий",
+  "expected": "403 (capability-гейт: у менеджера нет REPORTS)."
+ },
+ {
+  "id": "API-RBAC-M03",
+  "screen": "GET /shipper/blacklist",
+  "scenario": "SHIPPER_MANAGER без BLACKLIST → отказ",
+  "steps": "1. Логин SHIPPER_MANAGER. 2. GET /shipper/blacklist.",
+  "priority": "Высокий",
+  "expected": "403 (нет capability BLACKLIST)."
+ },
+ {
+  "id": "API-RBAC-T01",
+  "screen": "GET /shipper/orders",
+  "scenario": "TRANSPORT_ADMIN в shipper-скоуп → отказ",
+  "steps": "1. Логин TRANSPORT_ADMIN. 2. GET /shipper/orders.",
+  "priority": "Высокий",
+  "expected": "403 (роль ТК не имеет доступа к shipper-эндпойнтам)."
+ },
+ {
+  "id": "API-RBAC-A01",
+  "screen": "GET /super-admin/shipper-companies",
+  "scenario": "SHIPPER_ADMIN в super-admin-скоуп → отказ",
+  "steps": "1. Логин SHIPPER_ADMIN. 2. GET /super-admin/shipper-companies.",
+  "priority": "Высокий",
+  "expected": "403 (роль админа грузоотправителя не имеет super-admin доступа)."
+ },
+ {
+  "id": "API-RBAC-W01",
+  "screen": "GET /warehouse/orders",
+  "scenario": "SHIPPER_WAREHOUSE в своём скоупе → доступ",
+  "steps": "1. Логин SHIPPER_WAREHOUSE. 2. GET /warehouse/orders.",
+  "priority": "Высокий",
+  "expected": "200 (роль и capability проходят гейт)."
+ }
+]
