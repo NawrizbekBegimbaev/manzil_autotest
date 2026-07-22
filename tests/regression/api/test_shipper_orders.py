@@ -490,7 +490,7 @@ def test_cancel_rbac_warehouse_079(api, order_factory):
 
 @pytest.mark.medium
 @pytest.mark.lifecycle
-@pytest.mark.xfail(reason="BUG-035: гонка cancel отдаёт 500 вместо 409 concurrent-modification (нет пессимистичного лока)", strict=True)
+@pytest.mark.xfail(reason="BUG-035 / MNZL-275: гонка cancel отдаёт 500 вместо 409 concurrent-modification (нет пессимистичного лока)", strict=True)
 def test_cancel_race_080(admin, order_factory, cfg):
     """Правильный контракт: проигравший гонки — 409 (concurrent-modification / not-cancellable),
     НИКОГДА 500. Детерминированный до фикса: 15 раундов при p(500)≈1/3 → P(увидеть 500)≈99.8%.
@@ -833,7 +833,7 @@ def test_enter1c_operator_granted_204_115(cap, order_factory):
 
 @pytest.mark.medium
 @pytest.mark.lifecycle
-@pytest.mark.xfail(reason="BUG-035: гонка enter-1c отдаёт 500 вместо 409 concurrent-modification (тот же незамапленный @Version-конфликт)", strict=True)
+@pytest.mark.xfail(reason="BUG-035 / MNZL-275: гонка enter-1c отдаёт 500 вместо 409 concurrent-modification (тот же незамапленный @Version-конфликт)", strict=True)
 def test_enter1c_race_116(admin, order_factory, cfg):
     """Правильный контракт: проигравший гонки enter-1c — 409, НИКОГДА 500. Детерминированный
     до фикса: 15 раундов при p(500)≈1/2 → P(увидеть 500)≈99.997%. Хотя бы один 500 → BUG-035

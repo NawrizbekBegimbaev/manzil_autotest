@@ -9,7 +9,7 @@
 
 ---
 
-## BUG-035
+## BUG-035 (→ MNZL-275)
 ### Backend/API | Shipper | Dev | Гонка state-transition заказа (cancel / enter-1c) отдаёт 500 вместо 409
 - **Описание:** При двух параллельных запросах на смену состояния одного заказа проигравший периодически получает сырой **HTTP 500 `INTERNAL_SERVER_ERROR`** («服务器内部错误») вместо ожидаемого **409** concurrent-modification. Подтверждено на двух путях: `POST …/{id}/cancel` (заказ SELECTED, ~1/3 гонок → 500) и `POST …/{id}/enter-1c` (заказ IN_TRANSIT, ~1/2 гонок → 500; когда мапится корректно — 409 `CONFLICT` «数据已被另一操作修改»). Причина: эти пути читают заказ через `findByIdAndShipperCompanyId` **без пессимистичной блокировки** (в отличие от winner-select с `findByIdForUpdate`) и полагаются только на `@Version` (`Order.@Version`); при истинном конфликте версий исключение не всегда доходит до `GlobalExceptionHandler(OptimisticLockingFailureException → 409 error.concurrent-modification)` — часть вываливается generic-500. Целостность не нарушена (двойного перехода нет), но контракт ошибки нарушен.
 - **Шаги:**
@@ -18,18 +18,19 @@
   3. Повторить несколько раз (гонка недетерминированная).
 - **Ожидаемый результат:** Ровно один запрос — успех (200/204), второй — **409** (concurrent-modification либо доменный not-cancellable / not-1c-enterable).
 - **Фактический результат:** Иногда второй запрос — **500** `INTERNAL_SERVER_ERROR`.
+- **Подсказка к фиксу (проверено по исходникам):** денежные операции тендера `bid` и `select` берут пессимистичный лок строки заказа (`orderRepository.findByIdForUpdate` / `findByIdAndShipperCompanyIdForUpdate`) — их гонки сериализуются и 500 НЕ дают (подтверждено автотестами офферов, 0×500). У `cancel` и `enter-1c` такого лока нет — они читают через `findByIdAndShipperCompanyId` без `ForUpdate`. **Фикс = взять тот же `findByIdForUpdate` в cancel/enter-1c** (или гарантировать, что `@Version`-конфликт долетает до `GlobalExceptionHandler` как `OptimisticLockingFailureException`).
 - **Автотесты:** `test_shipper_orders.py::test_cancel_race_080`, `::test_enter1c_race_116` — оба `xfail(strict=True)`; кейсы **API-SHP-080 / API-SHP-116**.
 - **Вложение:** _<тело 500-ответа: `{"code":"INTERNAL_SERVER_ERROR","status":500,"instance":"/api/v1/shipper/orders/{id}/cancel|enter-1c"}`>_
 
 ---
 
-## BUG-036 (low severity)
+## BUG-036 (→ MNZL-276) (low severity)
 ### Backend/API | Shipper | Dev | Непоследовательная стратегия сокрытия кросс-тенантных ресурсов (403 раскрывает существование)
 - **Описание:** Доступ к чужому (принадлежащему другой компании) ресурсу обрабатывается непоследовательно. Доминирующая конвенция — **скрывать существование**, отдавая **404** (`findByIdAndShipperCompanyId → not-found`): так делают заказы (`error.order.not-found`), офферы, сотрудники (`error.employee.not-found`) — всего 23 места. Но **директория складов** (`WarehouseService.ownedWarehouse`) и **привязка водителей** (`OrderDriverService`) вместо этого делают `findById` + явную проверку компании и отдают **403 `error.forbidden`**, тем самым **раскрывая, что ресурс с таким id существует** в другой компании.
 - **Затронуто:** `PATCH /api/v1/shipper/warehouses/{id}`, `DELETE /api/v1/shipper/warehouses/{id}` (кейсы API-SHP-157/161) — чужой склад → 403 (а по конвенции ожидался 404).
 - **Влияние:** low. id складов — UUID v4 (неперебираемы), доступ в любом случае закрыт; это утечка факта существования, а не обход авторизации. Но стратегия сокрытия должна быть единообразной по системе.
 - **Решение за продуктом:** унифицировать — либо все кросс-тенантные обращения к чужому ресурсу отдают 404 (рекомендуется, BOLA-safe), либо это отклонение фиксируется как осознанное правило в `docs/PROJECT_REFERENCE.md`.
-- **Автотесты:** `test_shipper_orders.py::test_warehouse_update_tenancy_157` / `..._delete_tenancy_161` — проверяют фактическое поведение (403), ссылка `(→ BUG-036)`.
+- **Автотесты:** `test_shipper_orders.py::test_warehouse_update_tenancy_157` / `..._delete_tenancy_161` — проверяют фактическое поведение (403), ссылка `(→ BUG-036 / MNZL-276)`.
 
 ---
 

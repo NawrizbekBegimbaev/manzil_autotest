@@ -877,7 +877,7 @@
   "steps": "1. Отправить одновременно два запроса POST /api/v1/shipper/orders/{id}/cancel (например, через Postman Runner или из двух окон).",
   "expected": "Ровно один запрос получает HTTP 200 (заказ становится CANCELLED). Второй получает HTTP 409: либо code='error.concurrent-modification' (одновременное изменение), либо code='error.order.not-cancellable' (заказ уже отменён). Двойной отмены не происходит.",
   "priority": "Medium",
-  "comment": "api|lifecycle · (→ BUG-035) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
+  "comment": "api|lifecycle · (→ BUG-035 / MNZL-275) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
  },
  {
   "id": "API-SHP-081",
@@ -1273,7 +1273,7 @@
   "steps": "1. Отправить одновременно два запроса POST /api/v1/shipper/orders/{id}/enter-1c.",
   "expected": "Один запрос получает HTTP 204; второй — HTTP 409 (code='error.concurrent-modification' либо code='error.order.not-1c-enterable'). Отметка ставится ровно один раз.",
   "priority": "Medium",
-  "comment": "api|lifecycle · (→ BUG-035) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
+  "comment": "api|lifecycle · (→ BUG-035 / MNZL-275) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
  },
  {
   "id": "API-SHP-117",
@@ -1722,9 +1722,9 @@
   "scenario": "Tenancy: склад чужой компании → 404",
   "precond": "id склада принадлежит компании B. Получен accessToken SHIPPER_ADMIN компании A.",
   "steps": "1. Запрос: PATCH /api/v1/shipper/warehouses/{id} (склад компании B) с токеном админа компании A.",
-  "expected": "HTTP 403, code='error.forbidden': склад ищется только среди складов своей компании — чужой склад не редактируется и отдаётся как несуществующий. (→ BUG-036: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
+  "expected": "HTTP 403, code='error.forbidden': склад ищется только среди складов своей компании — чужой склад не редактируется и отдаётся как несуществующий. (→ BUG-036 / MNZL-276: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
   "priority": "High",
-  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
+  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036 / MNZL-276: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
  },
  {
   "id": "API-SHP-158",
@@ -1766,9 +1766,9 @@
   "scenario": "Tenancy: склад чужой компании → 404",
   "precond": "id склада принадлежит компании B. Получен accessToken SHIPPER_ADMIN компании A.",
   "steps": "1. Запрос: DELETE /api/v1/shipper/warehouses/{id} (склад компании B) с токеном админа компании A.",
-  "expected": "HTTP 403, code='error.forbidden': чужой склад не удаляется и отдаётся как несуществующий. (→ BUG-036: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
+  "expected": "HTTP 403, code='error.forbidden': чужой склад не удаляется и отдаётся как несуществующий. (→ BUG-036 / MNZL-276: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
   "priority": "High",
-  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
+  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036 / MNZL-276: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
  },
  {
   "id": "API-SHP-162",
