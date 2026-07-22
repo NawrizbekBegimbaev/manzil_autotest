@@ -55,6 +55,18 @@ class Settings(BaseSettings):
     tg_chat_id: str = ""
     tg_report_env: str = "STAGING"
 
+    # ─── DEV target — regression suite only (tests/regression); staging UAT
+    #     is never pointed here. Fresh tenant provisioned per run via API. ────
+    dev_url: str = "https://dev-manzil.greatmall.uz"
+    dev_super_admin_phone: str = ""
+    dev_super_admin_password: str = Field(default="", repr=False)
+    # Password assigned to the throwaway accounts the regression suite creates
+    # on DEV (must satisfy the policy). Never a real/existing credential.
+    dev_account_password: str = Field(default="", repr=False)
+    # Dedicated throwaway phones for ratelimit (429) cases — never real accounts.
+    ratelimit_phone_1: str = ""
+    ratelimit_phone_2: str = ""
+
     def creds(self, role: str) -> tuple[str, str]:
         """Return (phone, password) for a web role key. Empty when not set."""
         phone = getattr(self, f"{role}_phone", "")

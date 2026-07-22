@@ -10,6 +10,8 @@ because staging defaults to Chinese (China-first), so tests key on ``code``.
 
 from __future__ import annotations
 
+import threading
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -33,10 +35,13 @@ class ApiClient:
     """Thin HTTP wrapper. Methods return raw ``requests.Response`` — assertions
     live in the tests."""
 
-    def __init__(self, cfg: Settings) -> None:
-        self.base = cfg.base_url.rstrip("/") + "/api/v1"
+    def __init__(self, cfg: Settings, base_url: str | None = None) -> None:
+        # base_url override lets the regression suite target DEV
+        # (cfg.dev_url) without disturbing the staging UAT client.
+        self.base = (base_url or cfg.base_url).rstrip("/") + "/api/v1"
         self._session = _retrying_session()
         self._tokens: dict[str, str] = {}
+        self._tok_lock = threading.Lock()
 
     # ── raw verbs (never raise) ──
     def login(self, phone: str, password: str, client_type: str) -> requests.Response:
@@ -68,9 +73,10 @@ class ApiClient:
         """Login and cache the accessToken (raises if login is not 200 — a token
         is a precondition, not the assertion)."""
         key = f"{phone}:{client_type}"
-        if key not in self._tokens:
-            r = self.login(phone, password, client_type)
-            if r.status_code != 200:
-                raise RuntimeError(f"login {phone}/{client_type}: {r.status_code} {r.text[:200]}")
-            self._tokens[key] = r.json()["accessToken"]
-        return self._tokens[key]
+        with self._tok_lock:  # one login per (phone, clientType) per run, thread-safe
+            if key not in self._tokens:
+                r = self.login(phone, password, client_type)
+                if r.status_code != 200:
+                    raise RuntimeError(f"login {phone}/{client_type}: {r.status_code} {r.text[:200]}")
+                self._tokens[key] = r.json()["accessToken"]
+            return self._tokens[key]
