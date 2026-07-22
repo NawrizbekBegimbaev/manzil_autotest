@@ -211,3 +211,24 @@ def api(dev_api, api_dev_roles):
         return cache[role]
 
     return _for
+
+
+# ─── order-lifecycle provisioning ────────────────────────────────────────────
+
+
+@pytest.fixture
+def order_factory(dev_api, api_dev_roles):
+    """Factory → order in any lifecycle status via the honest API chain (company A).
+    Warehouse creates, carrier bids/drives, admin selects/completes/cancels.
+    Every created order is driven to a terminal state and deleted at teardown."""
+    from tests.regression.order_lifecycle import OrderFactory
+
+    f = OrderFactory(
+        dev_api,
+        dev_api.token(*api_dev_roles["super_admin"]),
+        dev_api.token(*api_dev_roles["shipper_warehouse"]),
+        dev_api.token(*api_dev_roles["shipper_admin"]),
+        dev_api.token(*api_dev_roles["transport_admin"]),
+    )
+    yield f
+    f.teardown()

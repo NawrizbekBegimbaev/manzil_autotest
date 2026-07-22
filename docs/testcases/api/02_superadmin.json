@@ -1187,8 +1187,7 @@
   "steps": "1. Запрос: DELETE /api/v1/super-admin/shipper-companies/{id} (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 409, в теле code=\"error.company.has-active-orders\" — пока у компании есть активные заявки, удаление блокируется; компания и пользователи остаются.",
   "priority": "High",
-  "comment": "api|conflict",
-  "automation": "pending",
+  "comment": "api|conflict · автоматизировано 2026-07-22: order-lifecycle хелпер (активный заказ → 409 has-active-orders)",
   "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {
@@ -1420,8 +1419,7 @@
   "steps": "1. Запрос: DELETE /api/v1/super-admin/transport-companies/{id} (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 409, в теле code=\"error.company.has-active-orders\" — удаление блокируется до завершения активных заявок.",
   "priority": "High",
-  "comment": "api|conflict",
-  "automation": "pending",
+  "comment": "api|conflict · автоматизировано 2026-07-22: order-lifecycle хелпер (активный заказ → 409 has-active-orders)",
   "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {

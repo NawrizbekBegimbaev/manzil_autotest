@@ -93,6 +93,14 @@ start with < full driver count or non-SELECTED; goods-sent when commStatus≠CON
 communication outside IN_WORK; cancel from DRAFT/PUBLISHED/QUOTED; complete from non-IN_TRANSIT;
 republish from non-CANCELLED; future schedule on QUOTED order (`cannot-schedule-with-bids`).
 
+**API-контракты (по факту dev, проверено провизинингом):** order id — **числовой (Long)**, не UUID.
+Деталь `GET /shipper/orders/{id}` обёрнута: `{order:{…}, winningOffer, history[]}` (сам заказ — в `order`).
+Bid body `{price}`; offer id — UUID. Attach-driver `POST /transport/orders/{id}/drivers
+{drivers:[{driverId, licensePlate, cardId}]}` — **`cardId` обязателен** (иначе 400
+`error.driver.card-id-required`). `start` требует полного `driversCount`. Transport-driver create
+`POST /transport/drivers {fullName, phone, cardId?}`. Cancel body `{reason}`; communication
+`{status: CONFIRMED|PENDING|DECLINED|UNAVAILABLE}`; start/goods-sent/complete — без тела.
+
 ---
 
 ## 4. Tendering (offers) & fleet (drivers)

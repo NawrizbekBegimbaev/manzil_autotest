@@ -181,6 +181,7 @@ i18n, pagination, conflict, session, lifecycle, state`. Служебные: `rat
 - **Поле телефона**: MUI-инпуты с лейблами (не placeholder) → искать через `get_by_label`; ввод — `press_sequentially(delay=25)`.
 - **Provisioning на dev/staging** (контракты): shipper-company POST требует `{name, tin(9 цифр), prefix(4 заглавные латиницы), address(мин ~2 симв — "a" даёт 400!), admin:{fullName, phone, password}}`; transport-company — то же без prefix; staff — `POST /shipper/staff {fullName, phone, password, role}`.
 - **Выдать capability** (напр. `SEE_PRICES`): `PATCH /shipper/staff/{id}` с ПОЛНЫМ телом `{fullName, phone, role, capabilities:[...]}` (частичное тело → 400).
+- **Order-lifecycle провизининг** (`tests/regression/order_lifecycle.py::OrderFactory`, честная цепочка через API): **order id — числовой (Long)**, не UUID. Деталь заказа `GET /shipper/orders/{id}` обёрнута в `{order, winningOffer, history}` — читать `["order"]`. Привязка водителя `POST /transport/orders/{id}/drivers` требует **`cardId`** у каждого водителя (иначе 400 `error.driver.card-id-required`); `POST /transport/orders/{id}/start` требует полного комплекта водителей (`driversCount`). Переходы: create(warehouse)→bid(carrier)→select(admin)→drivers+start(carrier)→communication CONFIRMED+goods-sent(warehouse)→complete(admin); cancel(admin) — только из SELECTED/IN_WORK/IN_TRANSIT.
 - **Эмулятор**: на длинных сессиях деградирует — перед важным прогоном делать холодный рестарт (`adb emu kill` → перезапуск с `-no-snapshot -dns-server 8.8.8.8,1.1.1.1`).
 
 ## Безопасность (репозиторий ПУБЛИЧНЫЙ)

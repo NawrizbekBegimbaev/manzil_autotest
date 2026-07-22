@@ -138,9 +138,9 @@
   "scenario": "Без токена → 401",
   "precond": "Токен не получен — запрос отправляется без авторизации.",
   "steps": "1. Запрос: GET /api/v1/shipper/staff без заголовка Authorization.",
-  "expected": "HTTP 401; Content-Type: application/problem+json; в теле code='error.unauthorized'.",
+  "expected": "HTTP 401; Content-Type: application/problem+json; в теле code='UNAUTHORIZED'.",
   "priority": "High",
-  "comment": "api|rbac"
+  "comment": "api|rbac · уточнено по фактическому контракту 2026-07-22: no-token entry-point даёт UNAUTHORIZED консистентно на всех surface'ах (как AUTH-079)"
  },
  {
   "id": "API-SHP-014",
@@ -259,9 +259,9 @@
   "scenario": "Негатив: не-склад роль + allowed-склады",
   "precond": "Получен accessToken роли SHIPPER_ADMIN. Известен uuid склада компании.",
   "steps": "1. Запрос: POST /api/v1/shipper/staff с токеном SHIPPER_ADMIN и телом {role:'SHIPPER_MANAGER', allowedFromWarehouseIds:[<uuid склада>], остальные поля валидны}.",
-  "expected": "HTTP 400, code='error.staff.locations-warehouse-only': списки разрешённых складов можно задавать только сотруднику с ролью SHIPPER_WAREHOUSE.",
+  "expected": "HTTP 400, code='error.staff.locations-order-entry-only': списки разрешённых складов можно задавать сотруднику с ORDER_ENTRY: роль SHIPPER_WAREHOUSE или офисная роль с правом ORDER_ENTRY.",
   "priority": "High",
-  "comment": "api|negative"
+  "comment": "api|negative · уточнено по фактическому контракту 2026-07-22: код переименован в locations-order-entry-only; правило расширено на роли с ORDER_ENTRY"
  },
  {
   "id": "API-SHP-025",
@@ -358,9 +358,9 @@
   "scenario": "Негатив: не-склад роль + allowed-склады → 400",
   "precond": "Получен accessToken роли SHIPPER_ADMIN. Известен uuid склада компании.",
   "steps": "1. Запрос: PATCH /api/v1/shipper/staff/{id} с токеном SHIPPER_ADMIN и телом {role:'SHIPPER_MANAGER', allowedToWarehouseIds:[<uuid склада>]}.",
-  "expected": "HTTP 400, code='error.staff.locations-warehouse-only': разрешённые склады задаются только для роли SHIPPER_WAREHOUSE.",
+  "expected": "HTTP 400, code='error.staff.locations-order-entry-only': разрешённые склады задаются для роли с ORDER_ENTRY (SHIPPER_WAREHOUSE или офисная с грантом).",
   "priority": "Medium",
-  "comment": "api|negative"
+  "comment": "api|negative · уточнено по фактическому контракту 2026-07-22: код locations-order-entry-only; правило по ORDER_ENTRY"
  },
  {
   "id": "API-SHP-034",
@@ -457,9 +457,9 @@
   "scenario": "Список заказов — happy path",
   "precond": "Получен accessToken роли SHIPPER_ADMIN. В компании есть заказы в разных статусах, включая черновики (DRAFT) и запланированные к публикации.",
   "steps": "1. Запрос: GET /api/v1/shipper/orders без параметров, заголовок Authorization: Bearer {accessToken} роли SHIPPER_ADMIN.",
-  "expected": "HTTP 200. Страница заказов: по умолчанию size=10, сортировка createdAt,desc, номер страницы (page) нумеруется с 1. Черновики (DRAFT) и запланированные заказы в списке видны; заказы в статусе SUPERSEDED скрыты. В каждой строке заполнены offerCount (число офферов) и creatorName (кто создал заказ).",
+  "expected": "HTTP 200. Страница заказов: по умолчанию size=10, сортировка createdAt,desc, номер страницы (page) нумеруется с 1. Черновики (DRAFT) и запланированные заказы в списке видны; заказы в статусе SUPERSEDED скрыты. В каждой строке заполнены offerCount (число офферов) и createdByName (кто создал заказ).",
   "priority": "High",
-  "comment": "api|positive"
+  "comment": "api|positive · уточнено по факту 2026-07-22: поле списка называется createdByName"
  },
  {
   "id": "API-SHP-043",
@@ -611,9 +611,9 @@
   "scenario": "Без токена → 401",
   "precond": "Запрос выполняется без авторизации.",
   "steps": "1. Запрос: GET /api/v1/shipper/orders без заголовка Authorization.",
-  "expected": "HTTP 401; в теле code='error.unauthorized'.",
+  "expected": "HTTP 401; в теле code='UNAUTHORIZED'.",
   "priority": "Medium",
-  "comment": "api|rbac"
+  "comment": "api|rbac · уточнено 2026-07-22: no-token entry-point → UNAUTHORIZED"
  },
  {
   "id": "API-SHP-057",
@@ -877,7 +877,7 @@
   "steps": "1. Отправить одновременно два запроса POST /api/v1/shipper/orders/{id}/cancel (например, через Postman Runner или из двух окон).",
   "expected": "Ровно один запрос получает HTTP 200 (заказ становится CANCELLED). Второй получает HTTP 409: либо code='error.concurrent-modification' (одновременное изменение), либо code='error.order.not-cancellable' (заказ уже отменён). Двойной отмены не происходит.",
   "priority": "Medium",
-  "comment": "api|lifecycle"
+  "comment": "api|lifecycle · (→ BUG-035) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
  },
  {
   "id": "API-SHP-081",
@@ -1106,9 +1106,9 @@
   "scenario": "Валидация: невалидное enum-значение → 400",
   "precond": "Получен accessToken роли SHIPPER_ADMIN. Заказ в статусе IN_WORK.",
   "steps": "1. Запрос: POST /api/v1/shipper/orders/{id}/communication с токеном SHIPPER_ADMIN и телом {status:'FOO'}.",
-  "expected": "HTTP 400, code='error.bad-request': значение status вне списка допустимых — тело запроса отклоняется как некорректное.",
+  "expected": "HTTP 400, code='BAD_REQUEST': значение status вне списка допустимых — тело запроса отклоняется как некорректное.",
   "priority": "Low",
-  "comment": "api|validation"
+  "comment": "api|validation · уточнено 2026-07-22: framework-level 400 (парс/отсутствие параметра) → code BAD_REQUEST, не error.bad-request"
  },
  {
   "id": "API-SHP-102",
@@ -1273,7 +1273,7 @@
   "steps": "1. Отправить одновременно два запроса POST /api/v1/shipper/orders/{id}/enter-1c.",
   "expected": "Один запрос получает HTTP 204; второй — HTTP 409 (code='error.concurrent-modification' либо code='error.order.not-1c-enterable'). Отметка ставится ровно один раз.",
   "priority": "Medium",
-  "comment": "api|lifecycle"
+  "comment": "api|lifecycle · (→ BUG-035) impl периодически отдаёт 500 вместо 409 (гонка @Version без пессимистичного лока); автотест xfail(strict) с 2026-07-22"
  },
  {
   "id": "API-SHP-117",
@@ -1403,9 +1403,9 @@
   "scenario": "Валидация: tab отсутствует → 400",
   "precond": "Получен accessToken роли SHIPPER_ADMIN.",
   "steps": "1. Запрос: GET /api/v1/shipper/departures без параметра tab с токеном SHIPPER_ADMIN.",
-  "expected": "HTTP 400, code='error.bad-request': отсутствует обязательный query-параметр tab.",
+  "expected": "HTTP 400, code='BAD_REQUEST': отсутствует обязательный query-параметр tab.",
   "priority": "Medium",
-  "comment": "api|validation"
+  "comment": "api|validation · уточнено 2026-07-22: framework-level 400 (парс/отсутствие параметра) → code BAD_REQUEST, не error.bad-request"
  },
  {
   "id": "API-SHP-129",
@@ -1414,9 +1414,9 @@
   "scenario": "Валидация: tab невалидное значение → 400",
   "precond": "Получен accessToken роли SHIPPER_ADMIN.",
   "steps": "1. Запрос: GET /api/v1/shipper/departures?tab=FOO с токеном SHIPPER_ADMIN.",
-  "expected": "HTTP 400, code='error.bad-request': значение tab вне списка допустимых (CONFIRMED, IN_TRANSIT, ENTERED_1C).",
+  "expected": "HTTP 400, code='BAD_REQUEST': значение tab вне списка допустимых (CONFIRMED, IN_TRANSIT, ENTERED_1C).",
   "priority": "Low",
-  "comment": "api|validation"
+  "comment": "api|validation · уточнено 2026-07-22: framework-level 400 (парс/отсутствие параметра) → code BAD_REQUEST, не error.bad-request"
  },
  {
   "id": "API-SHP-130",
@@ -1722,9 +1722,9 @@
   "scenario": "Tenancy: склад чужой компании → 404",
   "precond": "id склада принадлежит компании B. Получен accessToken SHIPPER_ADMIN компании A.",
   "steps": "1. Запрос: PATCH /api/v1/shipper/warehouses/{id} (склад компании B) с токеном админа компании A.",
-  "expected": "HTTP 404: склад ищется только среди складов своей компании — чужой склад не редактируется и отдаётся как несуществующий.",
+  "expected": "HTTP 403, code='error.forbidden': склад ищется только среди складов своей компании — чужой склад не редактируется и отдаётся как несуществующий. (→ BUG-036: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
   "priority": "High",
-  "comment": "api|tenancy"
+  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
  },
  {
   "id": "API-SHP-158",
@@ -1766,9 +1766,9 @@
   "scenario": "Tenancy: склад чужой компании → 404",
   "precond": "id склада принадлежит компании B. Получен accessToken SHIPPER_ADMIN компании A.",
   "steps": "1. Запрос: DELETE /api/v1/shipper/warehouses/{id} (склад компании B) с токеном админа компании A.",
-  "expected": "HTTP 404: чужой склад не удаляется и отдаётся как несуществующий.",
+  "expected": "HTTP 403, code='error.forbidden': чужой склад не удаляется и отдаётся как несуществующий. (→ BUG-036: непоследовательная стратегия — orders/staff отдают 404, склады 403.)",
   "priority": "High",
-  "comment": "api|tenancy"
+  "comment": "api|tenancy · факт: 403 error.forbidden (→ BUG-036: непоследовательное сокрытие кросс-тенанта, решение за продуктом)"
  },
  {
   "id": "API-SHP-162",
@@ -1999,6 +1999,7 @@
   "steps": "1. Запрос: GET /api/v1/shipper/dashboard/stats с токеном такого пользователя.",
   "expected": "HTTP 403, code='error.order.no-shipper-company': без привязки к компании грузоотправителя статистика не выдаётся.",
   "priority": "Low",
-  "comment": "api|negative"
+  "comment": "api|negative · automation:backend 2026-07-22: офисная роль без shipperCompanyId недостижима чёрным ящиком (staff всегда с компанией)",
+  "automation": "backend"
  }
 ]

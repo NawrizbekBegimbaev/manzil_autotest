@@ -789,6 +789,55 @@ def test_shipper_delete_404_107(sa):
     assert r.status_code == 404 and _code(r) == "error.company.not-found", f"[API-SA-107] {r.status_code}/{_code(r)}"
 
 
+# ─── active-order env (throwaway shipper+warehouse+carrier + real order) ──────
+# Backs the delete-guard cases SA-108/129. ACTIVE_STATUSES (OrderGuardAdapter):
+# DRAFT/PUBLISHED/QUOTED/SELECTED/IN_WORK/IN_TRANSIT block delete; COMPLETED/CANCELLED don't.
+
+
+class _OrderEnv:
+    def __init__(self, factory, shipper_id, transport_id):
+        self.factory = factory
+        self.shipper_id = shipper_id
+        self.transport_id = transport_id
+
+
+@pytest.fixture
+def order_env(sa, dev_api, pwd, track):
+    """Fresh shipper (with a warehouse staff) + fresh carrier, ready to build a real
+    order. Order teardown runs BEFORE `track` deletes the companies (fixture LIFO), so
+    the company delete isn't itself blocked by the active order we created."""
+    from tests.regression.order_lifecycle import OrderFactory
+
+    sc_body = _sc_body(pwd)
+    sc = sa.post("/super-admin/shipper-companies", json=sc_body).json()
+    track("shipper-companies", sc["id"])
+    admin_tok = dev_api.token(sc_body["admin"]["phone"], pwd, "WEB")
+
+    wh_phone = _uphone()
+    r = dev_api.request("POST", "/shipper/staff", admin_tok,
+                        json={"fullName": "AT WH", "phone": wh_phone, "password": pwd, "role": "SHIPPER_WAREHOUSE"})
+    assert r.status_code == 201, f"order_env warehouse: {r.status_code} {r.text[:160]}"
+    wh_tok = dev_api.token(wh_phone, pwd, "WAREHOUSE_APP")
+
+    tc_body = _tc_body(pwd)
+    tc = sa.post("/super-admin/transport-companies", json=tc_body).json()
+    track("transport-companies", tc["id"])
+    carrier_tok = dev_api.token(tc_body["admin"]["phone"], pwd, "TRANSPORT_COMPANY_APP")
+
+    factory = OrderFactory(dev_api, sa.token, wh_tok, admin_tok, carrier_tok)
+    yield _OrderEnv(factory, sc["id"], tc["id"])
+    factory.teardown()
+
+
+@pytest.mark.high
+@pytest.mark.lifecycle
+def test_shipper_delete_active_orders_409_108(sa, order_env):
+    order_env.factory.make("PUBLISHED")  # any ACTIVE-status order in the company blocks delete
+    r = sa.delete(f"/super-admin/shipper-companies/{order_env.shipper_id}")
+    assert r.status_code == 409 and _code(r) == "error.company.has-active-orders", \
+        f"[API-SA-108] ожидали 409 has-active-orders, получили {r.status_code}/{_code(r)}: {r.text[:160]}"
+
+
 # ─── transport-companies (API-SA-109…129) ───────────────────────────────────
 
 
@@ -940,6 +989,15 @@ def test_transport_soft_delete_127(sa, track, pwd):
 def test_transport_delete_404_128(sa):
     r = sa.delete(f"/super-admin/transport-companies/{uuid.uuid4()}")
     assert r.status_code == 404 and _code(r) == "error.company.not-found", f"[API-SA-128] {r.status_code}/{_code(r)}"
+
+
+@pytest.mark.high
+@pytest.mark.lifecycle
+def test_transport_delete_active_orders_409_129(sa, order_env):
+    order_env.factory.make("SELECTED")  # carrier is the selected winner on an ACTIVE order
+    r = sa.delete(f"/super-admin/transport-companies/{order_env.transport_id}")
+    assert r.status_code == 409 and _code(r) == "error.company.has-active-orders", \
+        f"[API-SA-129] ожидали 409 has-active-orders, получили {r.status_code}/{_code(r)}: {r.text[:160]}"
 
 
 # ─── drivers (API-SA-130…151) ───────────────────────────────────────────────
