@@ -118,7 +118,7 @@
   "steps": "1. Запрос: POST /api/v1/auth/login с телом {phone, password, clientType:'TRANSPORT_COMPANY_APP'} с верными данными водителя.",
   "expected": "HTTP 403, code='error.wrong-app'. clientType TRANSPORT_COMPANY_APP разрешён только роли TRANSPORT_ADMIN — водитель через приложение перевозчика не входит.",
   "priority": "Medium",
-  "comment": "api|negative|rbac"
+  "comment": "api|negative|rbac (→ MNZL-269: после промоута на staging expected 403→200)"
  },
  {
   "id": "API-AUTH-012",
@@ -470,7 +470,9 @@
   "steps": "1. Запрос: POST /api/v1/auth/login с заголовком 'X-Forwarded-For: 1.1.1.1, 2.2.2.2, 10.0.0.9'.\n2. Выполнить серию неудачных входов, меняя ЛЕВЫЕ адреса в заголовке и оставляя правый прежним.",
   "expected": "Для лимита по IP используется ПОСЛЕДНИЙ (правый) адрес списка — его проставляет наш пограничный прокси; левые адреса, которые может подделать клиент, игнорируются. Неудачные попытки с разными левыми адресами суммируются в один счётчик IP и приводят к 429.",
   "priority": "Low",
-  "comment": "api|security"
+  "comment": "api|security",
+  "automation": "backend",
+  "automationNote": "X-Forwarded-For правый хоп — nginx перебивает заголовок, извне не задать; backend-тест резолвера IP."
  },
  {
   "id": "API-AUTH-044",
@@ -635,7 +637,9 @@
   "steps": "1. Запрос: POST /api/v1/auth/refresh с валидным refreshToken в момент, когда дополнительная проверка учётной записи падает с внутренней ошибкой.",
   "expected": "HTTP 200, новая пара токенов выдаётся: при техническом сбое дополнительной проверки обновление НЕ отклоняется, чтобы не разрывать здоровую сессию. Блокировку или деактивацию всё равно поймает проверка при следующем обычном запросе.",
   "priority": "Low",
-  "comment": "api|security"
+  "comment": "api|security",
+  "automation": "backend",
+  "automationNote": "Refresh fail-open при внутреннем сбое БД — fault injection; backend-тест с моком сбоя."
  },
  {
   "id": "API-AUTH-059",
@@ -888,7 +892,9 @@
   "steps": "1. Запрос: GET /api/v1/me с этим токеном.",
   "expected": "HTTP 401, code='error.unauthorized', detail='Требуется авторизация' (локализуется по Accept-Language). Отличать от обычного 401 при отсутствующем/битом токене: там code='UNAUTHORIZED' и detail не локализован — это два разных варианта 401.",
   "priority": "Medium",
-  "comment": "api|security|i18n"
+  "comment": "api|security|i18n",
+  "automation": "backend",
+  "automationNote": "JWT с не-UUID subject — нужен ключ подписи Keycloak; backend/security-тест."
  },
  {
   "id": "API-AUTH-082",

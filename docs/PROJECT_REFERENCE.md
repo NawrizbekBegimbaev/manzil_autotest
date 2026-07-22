@@ -48,8 +48,13 @@ So **bad password→401, good password+wrong app→403**. DRIVER is in no client
 
 `GET /me` → `MeResponse{id, fullName, phone, role, company{id,name,type SHIPPER|TRANSPORT}|null,
 allowedFromWarehouseIds, allowedToWarehouseIds, defaultFromWarehouseId, defaultToWarehouseId}`.
-company null only for SUPER_ADMIN/DRIVER; warehouse fields populated only for SHIPPER_WAREHOUSE.
+company null only for SUPER_ADMIN/DRIVER. `allowedFrom/ToWarehouseIds` hold the assigned
+warehouses for SHIPPER_WAREHOUSE; office roles with `ORDER_ENTRY` (incl. SHIPPER_ADMIN — web
+«Создать заказ») also receive these lists but **empty** (`[]` = no warehouse restriction).
+`defaultFrom/ToWarehouseId` are omitted when unset.
 Blocked company → **403 `error.company.blocked`**; deactivated user → **401**.
+Block a company: `PATCH /super-admin/shipper-companies/{id}` with `{name, prefix, tin, address,
+active:false, admin:{…}}` (all fields required, incl. `admin`).
 
 Refresh rotation ON (old refresh invalidated). TTL: ~1d access / 1w refresh (KC-driven).
 
@@ -68,7 +73,7 @@ UNAVAILABLE**. Re-settable; never changes order status. ⚠ some docs say REACHE
 
 | Step | Actor | Endpoint | Pre → Post |
 |---|---|---|---|
-| Create | SHIPPER_WAREHOUSE (mobile) | `POST /warehouse/orders` | future `scheduledPublishDate`→DRAFT; else/today→PUBLISHED |
+| Create | ORDER_ENTRY roles: SHIPPER_WAREHOUSE (mobile) **+ office ADMIN/OPERATOR (web «Создать заказ»)** | `POST /warehouse/orders` (`@RequiresCapability(ORDER_ENTRY)`; class-gate admits all shipper roles; there is no separate office endpoint) | future `scheduledPublishDate`→DRAFT; else/today→PUBLISHED |
 | Auto-publish | system job (00:00 Asia/Tashkent + startup) | — | DRAFT(`scheduledPublishDate<=today`)→PUBLISHED |
 | Bid | TRANSPORT_ADMIN | `POST /transport/orders/{id}/offers` | first bid PUBLISHED→QUOTED |
 | Select winner | **SHIPPER_ADMIN only** | `POST /shipper/orders/{orderId}/offers/{offerId}/select` | QUOTED→SELECTED; winner SELECTED, others REJECTED |

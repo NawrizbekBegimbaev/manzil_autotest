@@ -33,6 +33,18 @@ def case_ids_by_file() -> dict[str, list[str]]:
     return out
 
 
+def backend_ids() -> set[str]:
+    """IDs marked `automation: backend` in the JSON — accounted for by backend
+    integration tests, not our black-box suite (see docs/testcases/NON-AUTO.md)."""
+    ids: set[str] = set()
+    for layer in ("api", "web", "mobile"):
+        for f in glob.glob(f"docs/testcases/{layer}/*.json"):
+            for c in json.load(open(f, encoding="utf-8")):
+                if c.get("automation") == "backend":
+                    ids.add(c["id"])
+    return ids
+
+
 def covered_ids() -> set[str]:
     seen: set[str] = set()
     for f in glob.glob("tests/regression/**/*.py", recursive=True):
@@ -47,22 +59,28 @@ def main() -> int:
     show_missing = "--missing" in sys.argv
     by_file = case_ids_by_file()
     covered = covered_ids()
+    backend = backend_ids()
+    accounted = covered | backend  # test-covered OR backend-integration-tracked
 
     total = 0
-    total_cov = 0
-    print("=== Coverage map (ID кейса ↔ тест/флоу) ===\n")
+    total_acc = 0
+    total_backend = 0
+    print("=== Coverage map (ID кейса ↔ тест/флоу; +automation:backend) ===\n")
     for f, ids in by_file.items():
-        cov = [i for i in ids if i in covered]
+        acc = [i for i in ids if i in accounted]
+        be = [i for i in ids if i in backend]
         total += len(ids)
-        total_cov += len(cov)
-        pct = 100 * len(cov) / len(ids) if ids else 0
-        print(f"{f.split('docs/testcases/')[-1]:40} {len(cov):4}/{len(ids):<4} {pct:5.1f}%")
-        if show_missing and len(cov) < len(ids):
-            miss = [i for i in ids if i not in covered]
-            print("    не покрыто:", ", ".join(miss[:15]), ("…" if len(miss) > 15 else ""))
+        total_acc += len(acc)
+        total_backend += len(be)
+        pct = 100 * len(acc) / len(ids) if ids else 0
+        tail = f"  (backend: {len(be)})" if be else ""
+        print(f"{f.split('docs/testcases/')[-1]:40} {len(acc):4}/{len(ids):<4} {pct:5.1f}%{tail}")
+        if show_missing and len(acc) < len(ids):
+            miss = [i for i in ids if i not in accounted]
+            print("    не учтено:", ", ".join(miss[:15]), ("…" if len(miss) > 15 else ""))
 
-    pct = 100 * total_cov / total if total else 0
-    print(f"\nИТОГО: {total_cov}/{total} = {pct:.1f}%")
+    pct = 100 * total_acc / total if total else 0
+    print(f"\nИТОГО: {total_acc}/{total} = {pct:.1f}%  (из них automation:backend — {total_backend})")
     return 0
 
 
