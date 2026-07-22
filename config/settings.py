@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     # Dedicated throwaway phones for ratelimit (429) cases — never real accounts.
     ratelimit_phone_1: str = ""
     ratelimit_phone_2: str = ""
+    # Pagination response shape of the regression target. DEV (MNZL-245) nests page
+    # metadata under `page`; staging still returns it flat (top-level). Strict, not
+    # auto-detected — a mismatch is a real signal, not something to tolerate.
+    page_shape: str = "nested"  # "nested" (dev) | "flat" (staging)
 
     def creds(self, role: str) -> tuple[str, str]:
         """Return (phone, password) for a web role key. Empty when not set."""

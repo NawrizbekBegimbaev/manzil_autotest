@@ -107,7 +107,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/countries без query-параметров (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. В теле страница списка: content[] с элементами {id, name} и поля пагинации (totalElements, number, size). По умолчанию size=20, сортировка по name по возрастанию (алфавит).",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-011",
@@ -129,7 +129,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/countries?search=zzzznomatch (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Пустая страница: content=[], totalElements=0. Ошибки нет.",
   "priority": "Low",
-  "comment": "api|pagination"
+  "comment": "api|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-013",
@@ -151,7 +151,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/countries?page=1&size=5 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. В ответе number=1 (вторая страница) и size=5; в content не больше 5 элементов.",
   "priority": "Low",
-  "comment": "api|pagination"
+  "comment": "api|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-015",
@@ -382,7 +382,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/cities без query-параметров (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Страница списка городов: content[] с элементами {id, name, countryId, country, createdAt} и поля пагинации. По умолчанию size=20, сортировка по createdAt по убыванию (новые первыми).",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-036",
@@ -657,7 +657,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/vehicle-types (заголовки Authorization: Bearer {accessToken} и Accept-Language: ru).",
   "expected": "HTTP 200. Страница списка типов ТС; у каждого элемента name = локализованное название категории + размер (например «Бортовой 17.5»). По умолчанию size=20, сортировка по createdAt по убыванию.",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-061",
@@ -778,7 +778,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/warehouses (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Страница со складами ВСЕХ компаний (без ограничения по компании). По умолчанию size=200, сортировка по createdAt по убыванию. У каждого склада заполнены cityName и country: либо из справочника городов, либо из районов Китая/Кыргызстана (division).",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-072",
@@ -811,7 +811,9 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/warehouses (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Для склада с районом Китая: cityName = название района, country=\"China\". Для склада с районом Кыргызстана: cityName = русское название района (если его нет — английское), country=\"Kyrgyzstan\".",
   "priority": "Low",
-  "comment": "api|positive"
+  "comment": "api|positive",
+  "automation": "pending",
+  "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {
   "id": "API-SA-075",
@@ -998,7 +1000,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/shipper-companies (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Страница списка компаний; по умолчанию size=10, сортировка по createdAt по убыванию. Для каждой компании подтянуты данные её админа (SHIPPER_ADMIN): adminUserId, adminFullName, adminPhone.",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-092",
@@ -1031,7 +1033,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/shipper-companies?createdFrom=2026-01-01&createdTo=2026-12-31 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. В выборке только компании, созданные в указанном диапазоне; обе границы включительно — записи, созданные в течение всего дня createdTo (до конца 2026-12-31), тоже попадают в результат.",
   "priority": "Medium",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-095",
@@ -1042,7 +1044,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/shipper-companies?createdFrom=01-2026 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 400, в теле code=\"BAD_REQUEST\" — значение не является датой формата ГГГГ-ММ-ДД и отклоняется.",
   "priority": "Low",
-  "comment": "api|validation"
+  "comment": "api|validation (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-096",
@@ -1053,7 +1055,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/shipper-companies?createdFrom=1990-01-01&createdTo=1990-01-02 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Пустая страница: content=[], totalElements=0. Пустой результат возвращается корректно, без ошибок (данные админов при этом не запрашиваются).",
   "priority": "Low",
-  "comment": "api|pagination"
+  "comment": "api|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-097",
@@ -1185,7 +1187,9 @@
   "steps": "1. Запрос: DELETE /api/v1/super-admin/shipper-companies/{id} (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 409, в теле code=\"error.company.has-active-orders\" — пока у компании есть активные заявки, удаление блокируется; компания и пользователи остаются.",
   "priority": "High",
-  "comment": "api|conflict"
+  "comment": "api|conflict",
+  "automation": "pending",
+  "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {
   "id": "API-SA-109",
@@ -1205,9 +1209,9 @@
   "scenario": "isAll=true — cityIds игнорируются",
   "precond": "Получен accessToken роли SUPER_ADMIN.",
   "steps": "1. Запрос: POST /api/v1/super-admin/transport-companies с isAll=true и непустым cityIds=[…] (заголовок Authorization: Bearer {accessToken}).",
-  "expected": "HTTP 201, в ответе allCities=true. Переданные cityIds сохраняются как есть, но при isAll=true система считает, что компания работает во всех городах — список городов её не ограничивает.",
+  "expected": "HTTP 201, в ответе isAll=true. Переданные cityIds сохраняются как есть, но при isAll=true система считает, что компания работает во всех городах — список городов её не ограничивает.",
   "priority": "Medium",
-  "comment": "api|positive"
+  "comment": "api|positive (→ MNZL-245: dev — вложенный page; при промоуте обновить expected) · уточнено по фактическому контракту 2026-07-22"
  },
  {
   "id": "API-SA-111",
@@ -1216,9 +1220,9 @@
   "scenario": "Дефолты isAll=false, active=true при отсутствии",
   "precond": "Получен accessToken роли SUPER_ADMIN.",
   "steps": "1. Запрос: POST /api/v1/super-admin/transport-companies с валидным телом без полей isAll и active (заголовок Authorization: Bearer {accessToken}).",
-  "expected": "HTTP 201. Значения по умолчанию: active=true, allCities=false.",
+  "expected": "HTTP 201. Значения по умолчанию: active=true, isAll=false.",
   "priority": "Medium",
-  "comment": "api|positive|boundary"
+  "comment": "api|positive|boundary · уточнено по фактическому контракту 2026-07-22"
  },
  {
   "id": "API-SA-112",
@@ -1295,7 +1299,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/transport-companies (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Страница списка транспортных компаний; по умолчанию size=10, сортировка по createdAt по убыванию. Для каждой компании подтянуты данные её админа (TRANSPORT_ADMIN).",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-119",
@@ -1317,7 +1321,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/transport-companies?active=true&createdFrom=2026-01-01 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Оба фильтра применяются одновременно: в content только активные компании, созданные не раньше 2026-01-01.",
   "priority": "Low",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-121",
@@ -1416,7 +1420,9 @@
   "steps": "1. Запрос: DELETE /api/v1/super-admin/transport-companies/{id} (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 409, в теле code=\"error.company.has-active-orders\" — удаление блокируется до завершения активных заявок.",
   "priority": "High",
-  "comment": "api|conflict"
+  "comment": "api|conflict",
+  "automation": "pending",
+  "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {
   "id": "API-SA-130",
@@ -1504,7 +1510,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/drivers (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Страница списка водителей; по умолчанию size=20, сортировка по createdAt по убыванию. У каждого элемента fullName и phone заполнены из связанной учётной записи пользователя.",
   "priority": "High",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-138",
@@ -1526,7 +1532,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/drivers?active=true&createdFrom=2026-01-01&createdTo=2026-12-31 (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Фильтры применяются вместе; createdTo включительно — водители, созданные в течение всего дня 2026-12-31, попадают в выборку.",
   "priority": "Medium",
-  "comment": "api|positive|pagination"
+  "comment": "api|positive|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-140",
@@ -1537,7 +1543,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/drivers?search=zzzznomatch (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Пустая страница: content=[]. Пустой результат возвращается без ошибок.",
   "priority": "Low",
-  "comment": "api|pagination"
+  "comment": "api|pagination (→ MNZL-245: dev — вложенный page; при промоуте обновить expected)"
  },
  {
   "id": "API-SA-141",
@@ -1766,9 +1772,9 @@
   "scenario": "RBAC: неаутентифицированный запрос → 401",
   "precond": "Токен не нужен: запрос выполняется без аутентификации.",
   "steps": "1. Запрос: GET /api/v1/super-admin/countries БЕЗ заголовка Authorization.",
-  "expected": "HTTP 401 Unauthorized, в теле code=\"error.unauthorized\" — запрос без токена отклоняется ещё до проверки роли, данные не возвращаются.",
+  "expected": "HTTP 401 Unauthorized, в теле code=\"UNAUTHORIZED\" — запрос без токена отклоняется ещё до проверки роли, данные не возвращаются.",
   "priority": "High",
-  "comment": "api|rbac"
+  "comment": "api|rbac · уточнено по фактическому контракту 2026-07-22: no-token entry-point даёт UNAUTHORIZED консистентно на всех surface'ах (как AUTH-079); error.unauthorized — доменный 401 при инвалидированном токене"
  },
  {
   "id": "API-SA-162",

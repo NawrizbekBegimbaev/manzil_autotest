@@ -33,16 +33,26 @@ def case_ids_by_file() -> dict[str, list[str]]:
     return out
 
 
-def backend_ids() -> set[str]:
-    """IDs marked `automation: backend` in the JSON — accounted for by backend
-    integration tests, not our black-box suite (see docs/testcases/NON-AUTO.md)."""
+def _ids_with_automation(value: str) -> set[str]:
     ids: set[str] = set()
     for layer in ("api", "web", "mobile"):
         for f in glob.glob(f"docs/testcases/{layer}/*.json"):
             for c in json.load(open(f, encoding="utf-8")):
-                if c.get("automation") == "backend":
+                if c.get("automation") == value:
                     ids.add(c["id"])
     return ids
+
+
+def backend_ids() -> set[str]:
+    """IDs marked `automation: backend` — accounted for by backend integration tests
+    (see docs/testcases/NON-AUTO.md); counted as covered."""
+    return _ids_with_automation("backend")
+
+
+def pending_ids() -> set[str]:
+    """IDs marked `automation: pending` — deferred (need cross-domain helpers).
+    NOT counted as covered; reported on their own line."""
+    return _ids_with_automation("pending")
 
 
 def covered_ids() -> set[str]:
@@ -60,27 +70,34 @@ def main() -> int:
     by_file = case_ids_by_file()
     covered = covered_ids()
     backend = backend_ids()
-    accounted = covered | backend  # test-covered OR backend-integration-tracked
+    pending = pending_ids()
+    accounted = covered | backend  # test-covered OR backend-integration-tracked (pending is NOT here)
 
     total = 0
     total_acc = 0
     total_backend = 0
-    print("=== Coverage map (ID кейса ↔ тест/флоу; +automation:backend) ===\n")
+    total_pending = 0
+    print("=== Coverage map (ID кейса ↔ тест/флоу; backend=covered, pending=deferred) ===\n")
     for f, ids in by_file.items():
         acc = [i for i in ids if i in accounted]
         be = [i for i in ids if i in backend]
+        pe = [i for i in ids if i in pending]
         total += len(ids)
         total_acc += len(acc)
         total_backend += len(be)
+        total_pending += len(pe)
         pct = 100 * len(acc) / len(ids) if ids else 0
-        tail = f"  (backend: {len(be)})" if be else ""
+        tail = "".join([f"  (backend: {len(be)})" if be else "", f"  (pending: {len(pe)})" if pe else ""])
         print(f"{f.split('docs/testcases/')[-1]:40} {len(acc):4}/{len(ids):<4} {pct:5.1f}%{tail}")
         if show_missing and len(acc) < len(ids):
-            miss = [i for i in ids if i not in accounted]
-            print("    не учтено:", ", ".join(miss[:15]), ("…" if len(miss) > 15 else ""))
+            miss = [i for i in ids if i not in accounted and i not in pending]
+            if miss:
+                print("    не покрыто:", ", ".join(miss[:15]), ("…" if len(miss) > 15 else ""))
+            if pe:
+                print("    ⏳ pending:", ", ".join(pe))
 
     pct = 100 * total_acc / total if total else 0
-    print(f"\nИТОГО: {total_acc}/{total} = {pct:.1f}%  (из них automation:backend — {total_backend})")
+    print(f"\nИТОГО: {total_acc}/{total} = {pct:.1f}%  (backend: {total_backend}, pending/отложено: {total_pending})")
     return 0
 
 
