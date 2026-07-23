@@ -1,4 +1,7 @@
 .env
+# Postman-коллекции от разработчиков могут нести секреты (напр. ONEC_WEBHOOK_SECRET) — не коммитить
+docs/*.postman_collection.json
+*.postman_collection.json
 .venv/
 venv/
 __pycache__/

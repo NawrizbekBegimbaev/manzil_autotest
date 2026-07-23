@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     # Dedicated throwaway phones for ratelimit (429) cases — never real accounts.
     ratelimit_phone_1: str = ""
     ratelimit_phone_2: str = ""
+    # 1С inbound webhook shared secret (X-Webhook-Token) for DEV. Empty → 1С happy-path
+    # tests skip (endpoint fail-closed). Never commit the value — .env only, repo public.
+    onec_webhook_secret: str = Field(default="", repr=False)
     # Pagination response shape of the regression target. DEV (MNZL-245) nests page
     # metadata under `page`; staging still returns it flat (top-level). Strict, not
     # auto-detected — a mismatch is a real signal, not something to tolerate.
