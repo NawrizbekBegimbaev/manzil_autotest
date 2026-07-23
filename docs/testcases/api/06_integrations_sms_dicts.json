@@ -615,9 +615,9 @@
   "scenario": "Превышение размера, срабатывает multipart resolver",
   "precond": "Выполнен вход; подготовлен файл крупнее общего лимита размера загрузки (multipart-лимит сервера).",
   "steps": "1. Запрос: POST /api/v1/files (multipart/form-data, поле file = очень крупный файл) с Bearer {accessToken}.",
-  "expected": "HTTP 413, code=error.request.too-large — запрос отклоняется ещё на этапе приёма загрузки.",
+  "expected": "HTTP 413; запрос отклоняется multipart-резолвером ещё на этапе приёма. code=CONTENT_TOO_LARGE (framework-паттерн: у не-доменных ошибок code=имя статуса); доменный текст error.request.too-large локализован в detail/message.",
   "priority": "Medium",
-  "comment": "api|boundary"
+  "comment": "api|boundary · уточнено по факту: framework-413 даёт code=CONTENT_TOO_LARGE, ключ error.request.too-large — только в тексте detail (2026-07-23)"
  },
  {
   "id": "API-INT-055",
