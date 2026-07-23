@@ -30,7 +30,9 @@
   "steps": "1. Запрос: GET /api/v1/transport/feed с заголовком Authorization: Bearer {accessToken} такого TRANSPORT_ADMIN.",
   "expected": "HTTP 403, в теле code='error.forbidden'. Ролевую проверку запрос проходит (роль TRANSPORT_ADMIN к разделу допущена), отказ даёт внутренняя проверка привязки к компании — поэтому code='error.forbidden', а не 'FORBIDDEN'.",
   "priority": "Medium",
-  "comment": "rbac|security|negative"
+  "comment": "rbac|security|negative",
+  "automation": "backend",
+  "automation_reason": "стенд-аккаунт TRANSPORT_ADMIN с transportCompanyId=null (RoleGuard defense-in-depth) — готовит девопс; чёрным ящиком не создать"
  },
  {
   "id": "API-RBAC-004",
@@ -393,7 +395,9 @@
   "steps": "1. Выполнить INSERT в таблицу user_granted_capabilities со значением capability 'UNKNOWN_CAP' (несуществующее право).\n2. Выполнить INSERT-дубликат уже существующей пары (user_id, capability).",
   "expected": "Шаг 1: вставка отклоняется CHECK-ограничением — допустимы только 13 значений: ORDER_REVIEW, ORDER_ENTRY, DEPARTURES, TENDER_SELECT, SMS_JOURNAL, REPORTS, WAREHOUSE_DIRECTORY_READ, WAREHOUSE_DIRECTORY_WRITE, BLACKLIST, ORDER_FULFILL, ORDER_DELETE, SMS_BLAST, SEE_PRICES. Шаг 2: вставка отклоняется первичным ключом (user_id, capability) — дубликат гранта невозможен.",
   "priority": "Medium",
-  "comment": "rbac|capability|security"
+  "comment": "rbac|capability|security",
+  "automation": "backend",
+  "automation_reason": "прямой доступ к БД стенда (CHECK ck_user_granted_capabilities_value + PK-дубль) — не через API"
  },
  {
   "id": "API-RBAC-037",
@@ -547,7 +551,9 @@
   "steps": "1. Запрос: GET /api/v1/me с заголовком Authorization: Bearer {такой токен}.",
   "expected": "HTTP 401, code='error.unauthorized' — токен, которому не соответствует учётная запись в приложении, доступа не даёт.",
   "priority": "Medium",
-  "comment": "security|negative"
+  "comment": "security|negative",
+  "automation": "backend",
+  "automation_reason": "токен с валидной подписью Keycloak, но subject не-UUID / без app-строки — подпись подделать нельзя"
  },
  {
   "id": "API-RBAC-051",
@@ -619,12 +625,12 @@
   "id": "API-RBAC-057",
   "razdel": "API — RBAC и capability",
   "screen": "POST /api/v1/auth/login (DRIVER во всех clientType)",
-  "scenario": "DRIVER не входит ни в один clientType (WEB/WAREHOUSE_APP/TRANSPORT_COMPANY_APP)",
+  "scenario": "DRIVER входит только через TRANSPORT_COMPANY_APP; WEB/WAREHOUSE_APP → wrong-app",
   "precond": "Есть учётная запись водителя (роль DRIVER) с верными телефоном и паролем.",
   "steps": "1. Запрос: POST /api/v1/auth/login с телом {phone, password, clientType:'WEB'}.\n2. Тот же запрос с clientType:'WAREHOUSE_APP'.\n3. Тот же запрос с clientType:'TRANSPORT_COMPANY_APP'.",
-  "expected": "Во всех трёх случаях — HTTP 403, в теле ответа code='error.wrong-app', токены не выдаются. Вход водителю недоступен ни через один тип клиента (веб, приложение склада, приложение перевозчика): отдельного входа для водителей пока не предусмотрено — это ожидаемое поведение, а не дефект.",
+  "expected": "clientType WEB → HTTP 403 error.wrong-app; WAREHOUSE_APP → HTTP 403 error.wrong-app; TRANSPORT_COMPANY_APP → HTTP 200, выдаётся пара токенов (роль DRIVER, effectiveCapabilities=[]). Вход водителя разрешён через приложение перевозчика.",
   "priority": "High",
-  "comment": "security|negative"
+  "comment": "security · уточнено по факту (→ MNZL-269): при промоуте на staging TRANSPORT_COMPANY_APP пускает и DRIVER; прежний expected (wrong-app во всех) устарел (2026-07-23)"
  },
  {
   "id": "API-RBAC-058",
@@ -734,7 +740,9 @@
   "steps": "1. Запрос: GET /actuator/env с заголовком Authorization: Bearer {accessToken} роли SHIPPER_ADMIN.\n2. Запрос: GET /actuator/health без токена.\n3. Запрос: GET /actuator/env без токена.",
   "expected": "Шаг 1: HTTP 403, code='FORBIDDEN'. Шаг 2: HTTP 200. Шаг 3: HTTP 401, code='UNAUTHORIZED'. Диагностические эндпойнты (кроме health/info/prometheus) закрыты для всех, кроме SUPER_ADMIN.",
   "priority": "Medium",
-  "comment": "rbac|security|negative"
+  "comment": "rbac|security|negative",
+  "automation": "backend",
+  "automation_reason": "actuator-эндпойнты (/actuator/env, /threaddump) НЕ проксируются на backend на dev — reverse-proxy отдаёт HTML-заглушку 200; проверка ролевого гейта требует прямого доступа к management-порту backend"
  },
  {
   "id": "API-RBAC-068",
@@ -866,18 +874,20 @@
   "steps": "1. Запрос: POST /api/v1/transport/orders/{orderId}/offers с валидным телом и заголовком Authorization: Bearer {accessToken} такого TRANSPORT_ADMIN.",
   "expected": "HTTP 403, code='error.forbidden' — ролевую проверку запрос прошёл, отказ даёт внутренняя проверка привязки к компании (поэтому код не 'FORBIDDEN').",
   "priority": "Low",
-  "comment": "rbac|tenancy|security|negative"
+  "comment": "rbac|tenancy|security|negative",
+  "automation": "backend",
+  "automation_reason": "стенд-аккаунт TRANSPORT_ADMIN с transportCompanyId=null — тот же класс, что RBAC-003"
  },
  {
   "id": "API-RBAC-080",
   "razdel": "API — RBAC и capability",
   "screen": "GET /api/v1/shipper/orders (мутация роли на лету через replaceRealmRole)",
-  "scenario": "Смена роли админом отражается в дефолтном наборе capability при следующем токене",
+  "scenario": "Смена роли отражается в дефолтном наборе capability немедленно (роль из БД, не из JWT)",
   "precond": "Сотрудник с ролью SHIPPER_OPERATOR (право ORDER_ENTRY есть по умолчанию). Доступен SHIPPER_ADMIN. Подготовлено валидное тело заказа склада.",
   "steps": "1. Под SHIPPER_ADMIN сменить сотруднику роль SHIPPER_OPERATOR → SHIPPER_DISPATCHER (PATCH /api/v1/shipper/staff/{staffId} или веб-форма сотрудника).\n2. Сотруднику выполнить повторный вход: POST /api/v1/auth/login (clientType:'WEB') → новый accessToken.\n3. Запрос: POST /api/v1/warehouse/orders с валидным телом и новым токеном.",
-  "expected": "Шаг 3: HTTP 403, code='error.forbidden' — у роли SHIPPER_DISPATCHER права ORDER_ENTRY нет. Роль записана внутрь токена, поэтому смена роли применяется после перевыпуска токена (перелогина) — в отличие от персональных грантов, которые действуют сразу.",
+  "expected": "Шаг 3: HTTP 403, code=error.forbidden — смена роли OPERATOR→DISPATCHER убирает ORDER_ENTRY СРАЗУ, тем же токеном, без релогина. caller.getRole() грузится из БД (@CurrentUser), поэтому capability-дефолты роли живут из БД (как и персональные гранты). Ролевой @PreAuthorize-гейт секции по-прежнему берёт роль из JWT (стал бы актуален после релогина), но проверка права — из БД.",
   "priority": "Medium",
-  "comment": "rbac|capability|security"
+  "comment": "rbac|capability|security · уточнено по факту: роль читается из БД (@CurrentUser) → смена роли мгновенна для capability, релогин НЕ нужен; прежний expected «нужен релогин» неверен (2026-07-23)"
  },
  {
   "id": "API-RBAC-081",
@@ -910,7 +920,9 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders с заголовком Authorization: Bearer {токен без ролей}.",
   "expected": "HTTP 403, code='FORBIDDEN' — аутентификация проходит (токен валиден, значит не 401), но без ролей в токене ни одна ролевая проверка не пропускает.",
   "priority": "Medium",
-  "comment": "rbac|security|negative"
+  "comment": "rbac|security|negative",
+  "automation": "backend",
+  "automation_reason": "токен с валидной подписью Keycloak без realm_access.roles — подпись подделать нельзя"
  },
  {
   "id": "API-RBAC-084",
@@ -1020,7 +1032,9 @@
   "steps": "1. Запрос: POST /api/v1/auth/refresh с телом {refreshToken} во время такого сбоя.",
   "expected": "HTTP 200, новые токены выдаются — при сбое проверки статуса refresh сессию не рвёт (осознанное поведение «fail-open»). Безопасность сохраняется: статус пользователя и компании проверяется на каждом обычном API-запросе, и заблокированный пользователь получит отказ при первом же обращении.",
   "priority": "Low",
-  "comment": "security|positive"
+  "comment": "security|positive",
+  "automation": "backend",
+  "automation_reason": "инъекция инфра-сбоя (недоступность users-БД в момент refresh, fail-open) — только с инженером стенда"
  },
  {
   "id": "API-RBAC-094",
