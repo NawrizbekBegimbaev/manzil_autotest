@@ -697,11 +697,11 @@
   "razdel": "API — Интеграции, SMS, справочники",
   "screen": "POST /api/v1/shipper/orders/{id}/sms",
   "scenario": "Capability: нет SMS_BLAST",
-  "precond": "Выполнен вход под SHIPPER_ADMIN, у которого нет capability SMS_BLAST.",
+  "precond": "Выполнен вход под SHIPPER_OPERATOR (роль без capability SMS_BLAST по умолчанию); заказ в статусе PUBLISHED.",
   "steps": "1. Запрос: POST /api/v1/shipper/orders/{id}/sms с заголовком Authorization: Bearer {accessToken}.",
   "expected": "HTTP 403, code=error.forbidden — отказ из-за отсутствия capability; он отличается от ролевого отказа (там code=FORBIDDEN).",
   "priority": "High",
-  "comment": "api|capability"
+  "comment": "api|capability · уточнено по факту: SMS_BLAST есть по умолчанию у ADMIN/MANAGER/DISPATCHER — роль без неё это OPERATOR (2026-07-23)"
  },
  {
   "id": "API-INT-065",
@@ -829,11 +829,11 @@
   "razdel": "API — Интеграции, SMS, справочники",
   "screen": "GET /api/v1/shipper/sms-logs",
   "scenario": "Capability: нет SMS_JOURNAL",
-  "precond": "Выполнен вход под SHIPPER_ADMIN, у которого нет capability SMS_JOURNAL.",
+  "precond": "Выполнен вход под SHIPPER_OPERATOR (роль без capability SMS_JOURNAL по умолчанию).",
   "steps": "1. Запрос: GET /api/v1/shipper/sms-logs с заголовком Authorization: Bearer {accessToken}.",
   "expected": "HTTP 403, code=error.forbidden — без capability SMS_JOURNAL журнал недоступен.",
   "priority": "High",
-  "comment": "api|capability"
+  "comment": "api|capability · уточнено по факту: SMS_JOURNAL есть по умолчанию у ADMIN/MANAGER/DISPATCHER — роль без неё это OPERATOR (2026-07-23)"
  },
  {
   "id": "API-INT-077",
