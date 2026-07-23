@@ -29,7 +29,8 @@
 - **Сервер (факт):** `{"code":"INTERNAL_SERVER_ERROR","status":500,"detail":"服务器内部错误","instance":"/api/v1/shipper/orders/{id}/cancel|enter-1c"}`.
 - **Ожидается:** `409` (проигравший) — как в winner-select.
 - **Фикс (проверено по исходникам):** `bid`/`select` уже берут `findByIdForUpdate` (пессимистичный лок заказа) — их гонки чистые (0×500, подтверждено автотестами офферов). `cancel`/`enter-1c` читают без `ForUpdate` — **взять тот же `findByIdForUpdate`** (либо гарантировать, что `@Version`-конфликт долетает до `GlobalExceptionHandler` как `OptimisticLockingFailureException`).
-- **Кейсы/тесты:** API-SHP-080 · `test_cancel_race_080`; API-SHP-116 · `test_enter1c_race_116` (оба `xfail(strict=True)`).
+- **4-я поверхность — 1С-webhook `completeBySystem` (dev, 2026-07-23):** два параллельных `POST /api/v1/integrations/1c/shipments/status` на ОДИН IN_TRANSIT-заказ (один госномер, разные `eventId`) → оба идут в `completeBySystem` (`orderRepository.findById`, БЕЗ `ForUpdate`, ~OrderService L946). **Детерминированно: 500 в 10/11 раундов** (проигравший `INTERNAL_SERVER_ERROR`, победитель 200). Целостность цела — ровно один переход COMPLETED. Тот же корень и фикс, что у cancel/enter-1c/goods-sent. Самая надёжно воспроизводимая поверхность.
+- **Кейсы/тесты:** API-SHP-080 · `test_cancel_race_080`; API-SHP-116 · `test_enter1c_race_116`; `test_warehouse_dispatch.py::test_race_double_goods_sent`/`_x_cancel`; `test_int_onec.py::test_race_double_complete_500` (все `xfail(strict=True)`).
 
 ---
 

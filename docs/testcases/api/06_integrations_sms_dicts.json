@@ -8,9 +8,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с заголовком X-Webhook-Token: {секрет вебхука} и телом {eventId:'<новый уникальный id события>', licensePlate:'<госномер>', event:'DELIVERED'}.\n2. Проверить статус заказа (GET заказа под ролью грузоотправителя или в веб-интерфейсе).",
   "expected": "HTTP 200, тело ответа пустое. Заказ переведён из IN_TRANSIT в COMPLETED (завершён системой). Событие с этим eventId зафиксировано как обработанное: повторная отправка того же eventId к повторной обработке не приводит.",
   "priority": "High",
-  "comment": "api|positive",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|positive"
  },
  {
   "id": "API-INT-002",
@@ -21,9 +19,7 @@
   "steps": "1. Запрос: повторный POST /api/v1/integrations/1c/shipments/status с тем же самым eventId, тем же телом и валидным заголовком X-Webhook-Token.",
   "expected": "HTTP 200, тело пустое. Повторной обработки нет: статус заказа не меняется, дубль eventId тихо пропускается (идемпотентность). Отдельный код error.webhook.duplicate-event на одиночном эндпоинте пока не возвращается (он встречается только в батче при одновременной гонке) — это ожидаемое поведение, а не дефект.",
   "priority": "High",
-  "comment": "api|idempotency",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|idempotency"
  },
  {
   "id": "API-INT-003",
@@ -100,9 +96,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с валидным X-Webhook-Token и телом {eventId:'<новый id>', licensePlate:'01 a-123.bc', event:'DELIVERED'}.",
   "expected": "HTTP 200. Разделители (пробел, точка, дефис, слэш, ·) и регистр букв номера нормализуются на сервере: заказ с номером 01A123BC найден и завершён (статус COMPLETED).",
   "priority": "Medium",
-  "comment": "api|positive",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|positive"
  },
  {
   "id": "API-INT-010",
@@ -113,9 +107,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с валидным X-Webhook-Token и незнакомым системе госномером в licensePlate.",
   "expected": "HTTP 404, code=error.webhook.no-active-shipment — активная перевозка по этому номеру не найдена.",
   "priority": "High",
-  "comment": "api|negative",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|negative"
  },
  {
   "id": "API-INT-011",
@@ -128,7 +120,7 @@
   "priority": "High",
   "comment": "api|negative",
   "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "automation_reason": "недостижимо: система запрещает один госномер на двух активных заказах (attach → 409 error.order.plate-busy), поэтому >1 IN_TRANSIT с одним номером не создать; ambiguous-plate — защитная ветка резолвера, штатным путём не воспроизводится"
  },
  {
   "id": "API-INT-012",
@@ -141,7 +133,7 @@
   "priority": "Medium",
   "comment": "api|negative",
   "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "automation_reason": "недостижимо: ShipmentResolver возвращает только IN_TRANSIT-заказы (всегда завершаемы), поэтому error.order.not-completable через вебхук не достигается — защитная ветка completeBySystem"
  },
  {
   "id": "API-INT-013",
@@ -152,9 +144,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с валидным X-Webhook-Token и телом без поля event (или с event:null).",
   "expected": "HTTP 200 — при отсутствии event подставляется значение по умолчанию DELIVERED (единственное поддерживаемое событие); заказ завершается как обычно.",
   "priority": "Low",
-  "comment": "api|boundary",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|boundary"
  },
  {
   "id": "API-INT-014",
@@ -165,9 +155,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с валидным X-Webhook-Token и телом без поля occurredAt.",
   "expected": "HTTP 200, тело пустое. Отсутствие occurredAt не считается ошибкой: временем получения события принимается текущее время сервера, заказ завершается.",
   "priority": "Low",
-  "comment": "api|boundary",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|boundary"
  },
  {
   "id": "API-INT-015",
@@ -189,9 +177,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status с валидным X-Webhook-Token, незнакомым госномером и заголовком Accept-Language: ru.\n2. Повторить тот же запрос с Accept-Language: zh, затем uz, ky, ug.",
   "expected": "Во всех пяти случаях HTTP 404, code=error.webhook.no-active-shipment; текст сообщения об ошибке в ответе переведён на язык из Accept-Language — перевод есть для всех 5 языков, вместо текста не отображается сам ключ.",
   "priority": "Low",
-  "comment": "api|i18n",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|i18n"
  },
  {
   "id": "API-INT-017",
@@ -202,9 +188,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status/batch с валидным X-Webhook-Token и телом {items:[{eventId, licensePlate, event:'DELIVERED'}, …]} — несколько событий по разным госномерам.",
   "expected": "HTTP 200; в теле итоги total/succeeded/failed и результат по каждому элементу — ok с его eventId. Все соответствующие заказы завершены; элементы обрабатываются независимо друг от друга.",
   "priority": "High",
-  "comment": "api|positive",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|positive (→ BUG-040) · батч JWT-гейтится (401) — тест xfail(strict) на корректный shared-secret контракт"
  },
  {
   "id": "API-INT-018",
@@ -215,9 +199,7 @@
   "steps": "1. Запрос: POST /api/v1/integrations/1c/shipments/status/batch с валидным X-Webhook-Token и двумя items (валидный и «пустой» номера).",
   "expected": "HTTP 200 (общий код успешный); в результатах по элементам: для валидного номера — ok, для второго — failure со статусом 404 и code=error.webhook.no-active-shipment. Ошибка одного элемента не отменяет остальные: валидный заказ завершён.",
   "priority": "High",
-  "comment": "api|negative",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|negative (→ BUG-040) · батч JWT-гейтится (401) — тест xfail(strict) на корректный shared-secret контракт"
  },
  {
   "id": "API-INT-019",
@@ -272,9 +254,7 @@
   "steps": "1. Отправить одновременно два запроса POST /api/v1/integrations/1c/shipments/status/batch с одним и тем же eventId в элементе и валидным X-Webhook-Token.",
   "expected": "У одного запроса элемент завершается ok (заказ завершён), у второго тот же элемент — failure со статусом 409 и code=error.webhook.duplicate-event. Заказ завершается ровно один раз.",
   "priority": "Medium",
-  "comment": "api|idempotency",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|idempotency (→ BUG-040) · батч JWT-гейтится (401) — тест xfail(strict) на корректный shared-secret контракт"
  },
  {
   "id": "API-INT-024",
@@ -285,9 +265,7 @@
   "steps": "1. Запрос: повторный POST /api/v1/integrations/1c/shipments/status/batch с тем же самым телом и валидным X-Webhook-Token.",
   "expected": "HTTP 200; каждый элемент — ok. Повторная отправка всего батча безопасна: дубли тихо пропускаются, статусы заказов не меняются.",
   "priority": "Medium",
-  "comment": "api|idempotency",
-  "automation": "backend",
-  "automation_reason": "требуется валидный ONEC_WEBHOOK_SECRET на стенде; на dev секрет пуст (fail-closed) → happy-path/идемпотентность/доменные ошибки по госномеру чёрным ящиком недостижимы"
+  "comment": "api|idempotency (→ BUG-040) · батч JWT-гейтится (401) — тест xfail(strict) на корректный shared-secret контракт"
  },
  {
   "id": "API-INT-025",

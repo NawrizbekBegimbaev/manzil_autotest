@@ -88,7 +88,9 @@ class OrderFactory:
         return next((o for o in rows if str(o.get("id")) == str(oid)), {"id": oid})
 
     # ── build ──
-    def make(self, status: str = "PUBLISHED", drivers_count: int = 1) -> dict:
+    def make(self, status: str = "PUBLISHED", drivers_count: int = 1, plate: str | None = None) -> dict:
+        """plate: госномер привязываемых водителей (для 1С-вебхука по номеру). None → уникальный
+        на каждого водителя. Один и тот же plate на двух IN_TRANSIT-заказах даёт ambiguous-plate."""
         assert status in self.STATUSES, f"unknown status {status}"
         vt, locs = self._ensure_refs()
         o = self._req("POST", "/warehouse/orders", self.wh, ok=(201,), json={
@@ -117,10 +119,11 @@ class OrderFactory:
         self.last_drivers = []
         for _ in range(drivers_count):
             phone = "+99890" + _digits(7)
+            lp = plate or ("01A" + _digits(6))  # уникальный по умолчанию (низкая коллизия в резолвере по номеру)
             drv = self._req("POST", "/transport/drivers", self.carrier, ok=(201,),
                             json={"fullName": "AT Driver", "phone": phone}).json()
-            assignments.append({"driverId": drv["id"], "licensePlate": "01A" + _digits(4), "cardId": _digits(18)})
-            self.last_drivers.append({"id": drv["id"], "phone": phone})
+            assignments.append({"driverId": drv["id"], "licensePlate": lp, "cardId": _digits(18)})
+            self.last_drivers.append({"id": drv["id"], "phone": phone, "plate": lp})
         self._req("POST", f"/transport/orders/{oid}/drivers", self.carrier, ok=(200, 201),
                   json={"drivers": assignments})
         self._req("POST", f"/transport/orders/{oid}/start", self.carrier, ok=(200, 201))
