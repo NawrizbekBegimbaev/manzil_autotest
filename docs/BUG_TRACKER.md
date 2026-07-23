@@ -10,17 +10,31 @@
 ---
 
 ## BUG-035 (→ MNZL-275)
-### Backend/API | Shipper | Dev | Гонка state-transition заказа (cancel / enter-1c) отдаёт 500 вместо 409
-- **Описание:** При двух параллельных запросах на смену состояния одного заказа проигравший периодически получает сырой **HTTP 500 `INTERNAL_SERVER_ERROR`** («服务器内部错误») вместо ожидаемого **409** concurrent-modification. Подтверждено на двух путях: `POST …/{id}/cancel` (заказ SELECTED, ~1/3 гонок → 500) и `POST …/{id}/enter-1c` (заказ IN_TRANSIT, ~1/2 гонок → 500; когда мапится корректно — 409 `CONFLICT` «数据已被另一操作修改»). Причина: эти пути читают заказ через `findByIdAndShipperCompanyId` **без пессимистичной блокировки** (в отличие от winner-select с `findByIdForUpdate`) и полагаются только на `@Version` (`Order.@Version`); при истинном конфликте версий исключение не всегда доходит до `GlobalExceptionHandler(OptimisticLockingFailureException → 409 error.concurrent-modification)` — часть вываливается generic-500. Целостность не нарушена (двойного перехода нет), но контракт ошибки нарушен.
+### Backend/API | Shipper+Warehouse | Dev | Гонка state-transition заказа (cancel / enter-1c / goods-sent) отдаёт 500 вместо 409
+- **Описание:** При двух параллельных запросах на смену состояния одного заказа проигравший периодически получает сырой **HTTP 500 `INTERNAL_SERVER_ERROR`** («服务器内部错误») вместо ожидаемого **409** concurrent-modification. Подтверждено на трёх путях: `POST /shipper/orders/{id}/cancel` (SELECTED), `POST /shipper/orders/{id}/enter-1c` (IN_TRANSIT) и **`POST /warehouse/orders/{id}/goods-sent`** (IN_WORK+CONFIRMED) — как в одиночной гонке (double-goods-sent), так и в кросс-гонке goods-sent×cancel. Когда мапится корректно — 409 `CONFLICT` «数据已被另一操作修改». Причина: эти пути читают заказ через `findByIdAndShipperCompanyId` **без пессимистичной блокировки** (в отличие от winner-select с `findByIdForUpdate`) и полагаются только на `@Version` (`Order.@Version`); при истинном конфликте версий исключение не всегда доходит до `GlobalExceptionHandler(OptimisticLockingFailureException → 409 error.concurrent-modification)` — часть вываливается generic-500. Целостность не нарушена (двойного перехода нет), но контракт ошибки нарушен.
 - **Шаги:**
   1. Создать заказ, довести до нужного статуса (SELECTED для cancel; IN_TRANSIT для enter-1c).
   2. Одновременно отправить два одинаковых запроса (`…/cancel {reason}` или `…/enter-1c`) двумя параллельными клиентами.
   3. Повторить несколько раз (гонка недетерминированная).
 - **Ожидаемый результат:** Ровно один запрос — успех (200/204), второй — **409** (concurrent-modification либо доменный not-cancellable / not-1c-enterable).
 - **Фактический результат:** Иногда второй запрос — **500** `INTERNAL_SERVER_ERROR`.
-- **Подсказка к фиксу (проверено по исходникам):** денежные операции тендера `bid` и `select` берут пессимистичный лок строки заказа (`orderRepository.findByIdForUpdate` / `findByIdAndShipperCompanyIdForUpdate`) — их гонки сериализуются и 500 НЕ дают (подтверждено автотестами офферов, 0×500). У `cancel` и `enter-1c` такого лока нет — они читают через `findByIdAndShipperCompanyId` без `ForUpdate`. **Фикс = взять тот же `findByIdForUpdate` в cancel/enter-1c** (или гарантировать, что `@Version`-конфликт долетает до `GlobalExceptionHandler` как `OptimisticLockingFailureException`).
-- **Автотесты:** `test_shipper_orders.py::test_cancel_race_080`, `::test_enter1c_race_116` — оба `xfail(strict=True)`; кейсы **API-SHP-080 / API-SHP-116**.
-- **Вложение:** _<тело 500-ответа: `{"code":"INTERNAL_SERVER_ERROR","status":500,"instance":"/api/v1/shipper/orders/{id}/cancel|enter-1c"}`>_
+- **Подсказка к фиксу (проверено по исходникам):** денежные операции тендера `bid` и `select` берут пессимистичный лок строки заказа (`orderRepository.findByIdForUpdate` / `findByIdAndShipperCompanyIdForUpdate`) — их гонки сериализуются и 500 НЕ дают (подтверждено автотестами офферов, 0×500). У `cancel`, `enter-1c` и `goodsSent` такого лока нет — они читают через `findByIdAndShipperCompanyId` без `ForUpdate` (`OrderService.goodsSent` — строка ~735). **Фикс = взять тот же `findByIdForUpdate` в cancel/enter-1c/goodsSent** (или гарантировать, что `@Version`-конфликт долетает до `GlobalExceptionHandler` как `OptimisticLockingFailureException`).
+- **Автотесты:** `test_shipper_orders.py::test_cancel_race_080`, `::test_enter1c_race_116`, `test_warehouse_dispatch.py::test_race_double_goods_sent`, `::test_race_goods_sent_x_cancel` — все `xfail(strict=True)`; кейсы **SHP-080/116** + гонки сверх библиотеки (WH goods-sent). Позитив: `communication×replace` чист — replace под `lockForFulfillment` сериализует.
+- **Сводная карта локов заказа (собрано регресс-модулями, аргумент «фикс одним паттерном»):**
+
+  | Путь | Fetch заказа | Пессимистичный лок | Гонка (12 раундов) |
+  |---|---|---|---|
+  | bid (`POST /transport/orders/{id}/offers`) | `findByIdForUpdate` | ✅ есть | чисто (0×500) |
+  | select (`.../offers/{o}/select`) | `findByIdAndShipperCompanyIdForUpdate` | ✅ есть | чисто (select×select / ×cancel / ×offer-PATCH) |
+  | attach/set/replace (`.../drivers`) | `loadEditableOrderForUpdate` (lock order row) | ✅ на заказ | чисто (double-attach, start×replace); **но не на водителя → BUG-038** |
+  | start (`.../start`) | `lockForFulfillment` → `findByIdForUpdate` | ✅ есть | чисто (double-start) |
+  | **cancel** (`/shipper/orders/{id}/cancel`) | `findByIdAndShipperCompanyId` | ❌ **нет** | **500** (cancel×cancel) |
+  | **enter-1c** (`/shipper/orders/{id}/enter-1c`) | `findByIdAndShipperCompanyId` | ❌ **нет** | **500** (double-enter-1c) |
+  | **goods-sent** (`/warehouse/orders/{id}/goods-sent`, ~L735) | `findByIdAndShipperCompanyId` | ❌ **нет** | **500** (double-goods-sent, goods-sent×cancel) |
+  | communication (`/warehouse/orders/{id}/communication`) | `findByIdAndShipperCompanyId` | ❌ нет | чисто в паре с залоченным replace (косвенно сериализован); одиночная перезапись безопасна |
+
+  **Вывод:** дефект — там, где мутация статуса/поля заказа идёт БЕЗ `findByIdForUpdate`. Единый фикс — привести cancel/enter-1c/goods-sent к тому же пессимистичному локу, что уже у bid/select/attach/start (или гарантировать маппинг `OptimisticLockingFailureException → 409` для всех).
+- **Вложение:** _<тело 500-ответа: `{"code":"INTERNAL_SERVER_ERROR","status":500,"instance":"/api/v1/shipper/orders/{id}/cancel|enter-1c|goods-sent"}`>_
 
 ---
 

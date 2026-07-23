@@ -8,7 +8,7 @@
 
 ## BUG-035 (→ MNZL-275) — Гонка state-transition заказа (cancel / enter-1c): 500 вместо 409 (dev)
 
-- **Краткое описание:** Две параллельные смены состояния одного заказа: проигравший периодически получает 500 вместо 409. Подтверждено на cancel (SELECTED) и enter-1c (IN_TRANSIT).
+- **Краткое описание:** Две параллельные смены состояния одного заказа: проигравший периодически получает 500 вместо 409. Подтверждено на cancel (SELECTED), enter-1c (IN_TRANSIT) и goods-sent (IN_WORK+CONFIRMED; double-goods-sent и goods-sent×cancel).
 - **Полное описание:** `POST …/{id}/cancel` и `POST …/{id}/enter-1c` не сериализуют доступ к строке заказа пессимистичной блокировкой. Winner-select тот же конфликт решает через `findByIdForUpdate` (пессимистичный лок) + `@Version` и корректно отдаёт 409. Эти пути читают через `findByIdAndShipperCompanyId` (без лока) и полагаются только на `Order.@Version`; при истинном конфликте версий исключение не всегда мапится глобальным хендлером в 409 `error.concurrent-modification` и вываливается как 500 `INTERNAL_SERVER_ERROR`. Для enter-1c при корректном маппинге виден 409 `CONFLICT` «数据已被另一操作修改». Целостность не нарушена (двойного перехода нет), но контракт ошибки нарушен.
 - **Воспроизведение:** заказ → SELECTED (cancel) / IN_TRANSIT (enter-1c); одновременно два одинаковых POST; повторить ~3–6 раз (недетерминированно, ~1/3–1/2 гонок → 500).
 - **Сервер (факт):** `{"code":"INTERNAL_SERVER_ERROR","status":500,"detail":"服务器内部错误","instance":"/api/v1/shipper/orders/{id}/cancel|enter-1c"}`.
