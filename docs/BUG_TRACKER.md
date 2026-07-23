@@ -9,6 +9,24 @@
 
 ---
 
+## BUG-040 (→ трекер: ключ будет присвоен)
+### Backend/API | Integrations (1C) | Dev | Батч-эндпойнт вебхука 1С требует Keycloak-JWT → недостижим для 1С (аутентификация только по shared-secret)
+- **Описание:** Одиночный вебхук `POST /api/v1/integrations/1c/shipments/status` в `SecurityConfig` объявлен `permitAll()` (JWT байпасится, шлюз — собственная константно-временная проверка `X-Webhook-Token` в контроллере). Но **батч-эндпойнт** `POST /api/v1/integrations/1c/shipments/status/batch` в `permitAll`-матчер **не добавлен**: матчер — ТОЧНЫЙ путь `…/shipments/status` без `/**`, поэтому батч проваливается в `anyRequest().authenticated()` и требует валидный **Keycloak-JWT**. При этом сам контроллер батча вызывает тот же `verifyToken(token)` по shared-secret и в Javadoc заявляет «Authenticate with the X-Webhook-Token header (shared secret)». Итог: 1С (у которой есть только shared-secret, но нет JWT) **не может вызвать батч** — эндпойнт для своего единственного назначенного потребителя мёртв.
+- **Доказательство двух-гейтовой природы (dev, 2026-07-23):**
+  - `batch` без JWT (любой X-Webhook-Token) → **401 `code=UNAUTHORIZED`** (framework-фильтр Keycloak, доменный `verifyToken` НЕ достигнут).
+  - `batch` + валидный JWT super-admin + любой X-Webhook-Token → **401 `code=error.unauthorized`** (уже доменный `verifyToken`; на dev секрет пуст → fail-closed).
+  - `batch` + валидный JWT + пустой/битый `items` → **400 `BAD_REQUEST`** (валидация проходит только ЗА JWT-гейтом).
+  - Одиночный `…/shipments/status` (permitAll) без JWT → сразу доменный **401 `error.unauthorized`** — как и задумано.
+- **Шаги:** `POST /api/v1/integrations/1c/shipments/status/batch` с корректным телом и заголовком `X-Webhook-Token`, но БЕЗ `Authorization: Bearer` → 401 `UNAUTHORIZED` (framework), а не доменная проверка секрета.
+- **Ожидаемый результат:** Батч, как и одиночный эндпойнт, аутентифицируется исключительно по `X-Webhook-Token` (JWT не требуется) — 1С должна вызывать его тем же shared-secret. Негативы контракта: нет токена/неверный/пустой/секрет не задан → 401 `error.unauthorized`; невалидное тело → 400 `error.bad-request` (после прохождения shared-secret).
+- **Фактический результат:** Батч требует Keycloak-JWT (framework-гейт `UNAUTHORIZED`) прежде доменной проверки; недостижим для 1С.
+- **Причина (по исходникам, `SecurityConfig.java:45`):** комментарий рядом с матчером обосновывает ТОЧНЫЙ путь заботой о «будущих эндпойнтах под /integrations/**, которые не должны молча уехать без auth» — но батч это УЖЕ существующий эндпойнт 1С, спроектированный под shared-secret (собственный `verifyToken`), просто не внесённый в allowlist. Классический недосмотр «добавили метод в контроллер, забыли путь в SecurityConfig».
+- **Подсказка к фиксу:** добавить `/api/v1/integrations/1c/shipments/status/batch` в `permitAll()` (либо сузить до общего `…/shipments/status*` с явной осторожностью). Тогда батч аутентифицируется своим `verifyToken`, как одиночный.
+- **Автотесты:** `test_int_onec.py::test_batch_no_token_022` / `::test_batch_empty_items_019` / `::test_batch_oversize_020` / `::test_batch_item_empty_eventid_021` — `xfail(strict=True)` (проверяют корректный контракт: батч под shared-secret → 401 `error.unauthorized` / 400 `error.bad-request`). После фикса XPASS-сигнал.
+- **Вложение:** _<тело: `batch` без JWT → `{"code":"UNAUTHORIZED","status":401}` vs одиночный → `{"code":"error.unauthorized","status":401}`>_
+
+---
+
 ## BUG-039 (→ трекер: ключ будет присвоен)
 ### Backend/API | Dictionaries | Dev | Поиск справочника divisions с пустым q="" отдаёт 500 вместо 400
 - **Описание:** `GET /api/v1/cn/divisions/search?q=` и `GET /api/v1/kg/divisions/search?q=` с ПУСТЫМ (но присутствующим) параметром `q` отвечают **HTTP 500 INTERNAL_SERVER_ERROR**. При ОТСУТСТВУЮЩЕМ `q` тот же эндпойнт корректно отдаёт 400 (q обязателен). То есть валидация ловит missing, но не empty — пустая строка доходит до логики поиска и валит 500. Систематично: воспроизводится и на CN, и на KG. Детерминированно.

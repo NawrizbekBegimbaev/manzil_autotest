@@ -6,6 +6,21 @@
 
 ---
 
+## BUG-040 (→ трекер: ключ будет присвоен) — Батч-вебхук 1С требует Keycloak-JWT → недостижим для 1С (dev)
+
+- **Краткое описание:** `POST /api/v1/integrations/1c/shipments/status/batch` не внесён в `permitAll`-allowlist (`SecurityConfig`), поэтому требует валидный Keycloak-JWT прежде собственной shared-secret проверки. 1С, аутентифицирующаяся только по `X-Webhook-Token`, вызвать батч не может.
+- **Полное описание:** Одиночный `…/shipments/status` объявлен `permitAll()` — JWT байпасится, единственный шлюз — константно-временная проверка `X-Webhook-Token` в `OneCWebhookController.verifyToken`. Матчер задан ТОЧНЫМ путём (без `/**`) с комментарием про «будущие эндпойнты под /integrations/**». Но батч `…/shipments/status/batch` — уже существующий эндпойнт, вызывающий тот же `verifyToken` и заявляющий в Javadoc аутентификацию по shared-secret — под этот точный матчер не попадает и проваливается в `anyRequest().authenticated()`. Недосмотр SecurityConfig, а не осознанный дизайн: контроллер и кейсы (API-INT-017…024) ожидают ту же shared-secret аутентификацию, что у одиночного.
+- **Проверено (dev, 2026-07-23):**
+  - `batch` без JWT → **401 `UNAUTHORIZED`** (framework-фильтр; `verifyToken` не достигнут).
+  - `batch` + JWT super-admin → **401 `error.unauthorized`** (уже доменный `verifyToken`; секрет на dev пуст → fail-closed).
+  - `batch` + JWT + пустой/битый/oversize `items` → **400 `BAD_REQUEST`** (валидация только за JWT-гейтом).
+  - Одиночный без JWT → сразу доменный **401 `error.unauthorized`** (как задумано).
+- **Ожидаемое:** батч аутентифицируется только по `X-Webhook-Token` (как одиночный). Фикс — добавить путь батча в `permitAll()`.
+- **Автотесты:** `test_int_onec.py::test_batch_no_token_022 / _empty_items_019 / _oversize_020 / _item_empty_eventid_021` — `xfail(strict=True)`.
+- **Смежно (не баг, ограничение стенда):** на dev `ONEC_WEBHOOK_SECRET` пуст → эндпойнт fail-closed (все запросы 401). Happy-path и доменные ошибки 1С (завершение IN_TRANSIT→COMPLETED, идемпотентность, 404/409 по номеру) невозможно проверить чёрным ящиком без валидного секрета стенда — помечены `automation:backend`.
+
+---
+
 ## BUG-035 (→ MNZL-275) — Гонка state-transition заказа (cancel / enter-1c): 500 вместо 409 (dev)
 
 - **Краткое описание:** Две параллельные смены состояния одного заказа: проигравший периодически получает 500 вместо 409. Подтверждено на cancel (SELECTED), enter-1c (IN_TRANSIT) и goods-sent (IN_WORK+CONFIRMED; double-goods-sent и goods-sent×cancel).
