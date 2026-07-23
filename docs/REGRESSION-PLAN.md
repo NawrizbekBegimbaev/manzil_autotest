@@ -11,7 +11,8 @@ and not iplimit and not slow"` — только Passed/Failed/XFail, ноль sk
 | 2 | API Super-admin (`test_superadmin.py`) | 166 | ✅ 166/166 |
 | 3 | API Shipper (staff+orders, `test_shipper.py` + `test_shipper_orders.py`) | 182 | ✅ 182/182 (1 backend: SHP-182) |
 | 4a | API Tendering/Transport (`test_tender_*.py`) | 157 | ✅ 157/157 (backend: TND-061) |
-| 4b | API Warehouse/Dispatch · Integrations/SMS · RBAC | ~343 | ⏳ |
+| 4b-i | API Warehouse/Dispatch (`test_warehouse_*.py`) | 138 | ✅ 138/138 (backend: 2, pending: 3, slow: WH-120) |
+| 4b-ii | API Integrations/SMS · RBAC | ~205 | ⏳ |
 | 5 | Web (Playwright) | 370 | ⏳ |
 | 6 | Mobile (Maestro) | 119 | ⏳ |
 

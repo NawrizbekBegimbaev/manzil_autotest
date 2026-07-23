@@ -294,7 +294,7 @@
   "steps": "1. Запрос: POST /api/v1/warehouse/orders (Authorization: Bearer {accessToken}) с несуществующим fromWarehouseId и валидным toWarehouseId.",
   "expected": "HTTP 404 Not Found, code='error.order.from-location-not-found' — склад загрузки не найден.",
   "priority": "High",
-  "comment": "api|negative|tenancy"
+  "comment": "api|negative|tenancy · уточнено по факту 2026-07-23: 404 требует вызывающего с пустым allowed-списком (admin=все); у роли SHIPPER_WAREHOUSE с непустым allowed случайный id → 403 error.order.warehouse-not-allowed (проверка allowed раньше существования, OrderService L991-999 vs L1191)"
  },
  {
   "id": "API-WH-028",
@@ -305,7 +305,7 @@
   "steps": "1. Запрос: POST /api/v1/warehouse/orders (Authorization: Bearer {accessToken}) с валидным fromWarehouseId и несуществующим toWarehouseId.",
   "expected": "HTTP 404 Not Found, code='error.order.to-location-not-found' — склад выгрузки не найден.",
   "priority": "High",
-  "comment": "api|negative|tenancy"
+  "comment": "api|negative|tenancy · уточнено по факту 2026-07-23: 404 требует вызывающего с пустым allowed-списком (admin=все); у роли SHIPPER_WAREHOUSE с непустым allowed случайный id → 403 error.order.warehouse-not-allowed (проверка allowed раньше существования, OrderService L991-999 vs L1191)"
  },
  {
   "id": "API-WH-029",
@@ -1405,7 +1405,8 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/drivers (Authorization: Bearer {accessToken}).",
   "expected": "HTTP 403 Forbidden, code='error.forbidden' — для этого раздела требуется право ORDER_REVIEW; без него офисная роль получает отказ по праву (capability).",
   "priority": "Low",
-  "comment": "api|capability"
+  "comment": "api|capability · automation:backend 2026-07-23: снятие дефолтного ORDER_REVIEW у офисной роли недостижимо чёрным ящиком (capabilities добавляют гранты, не убирают дефолты)",
+  "automation": "backend"
  },
  {
   "id": "API-WH-129",
@@ -1427,7 +1428,8 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/dispatch-log (Authorization: Bearer {accessToken}).\n2. Найти записи этого получателя.",
   "expected": "HTTP 200 OK. По получателю ровно одна запись: viewCount = максимум по исходным строкам (не сумма), lastViewedAt = самое позднее время просмотра, счётчики отправленных (SENT) считаются по каждому каналу.",
   "priority": "Medium",
-  "comment": "api|positive"
+  "comment": "api|positive · automation:pending 2026-07-23: нужен хелпер провизининга dispatch/view-событий (агрегация viewCount=max по нескольким строкам получателя) — Фаза 4b integrations",
+  "automation": "pending"
  },
  {
   "id": "API-WH-131",
@@ -1438,7 +1440,8 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/dispatch-log (Authorization: Bearer {accessToken}).\n2. Проверить порядок записей.",
   "expected": "HTTP 200 OK. Порядок: сначала транспортные компании (TRANSPORT), затем водители (DRIVER); внутри группы — по убыванию viewCount; при равенстве — по имени.",
   "priority": "Low",
-  "comment": "api|positive"
+  "comment": "api|positive · automation:pending 2026-07-23: нужен хелпер провизининга dispatch/view-событий (сортировка TRANSPORT>DRIVER, viewCount desc) — Фаза 4b integrations",
+  "automation": "pending"
  },
  {
   "id": "API-WH-132",
@@ -1471,7 +1474,8 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/dispatch-log (Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200 OK. Записей по удалённому пользователю и по получателю с нецелевой ролью в журнале нет — такие строки отбрасываются и в ответ не попадают.",
   "priority": "Low",
-  "comment": "api|positive"
+  "comment": "api|positive · automation:pending 2026-07-23: нужен хелпер провизининга dispatch/view-событий (фильтрация удалённого получателя) — Фаза 4b integrations",
+  "automation": "pending"
  },
  {
   "id": "API-WH-135",
@@ -1515,6 +1519,7 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/dispatch-log (Authorization: Bearer {accessToken}).",
   "expected": "HTTP 403 Forbidden, code='error.forbidden' — без привязки к компании-грузоотправителю журнал рассылки недоступен.",
   "priority": "Low",
-  "comment": "api|negative|rbac"
+  "comment": "api|negative|rbac · automation:backend 2026-07-23: офисная роль без shipperCompanyId недостижима ЧЯ (staff всегда с компанией) — как SHP-182",
+  "automation": "backend"
  }
 ]

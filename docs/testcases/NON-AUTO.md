@@ -6,7 +6,7 @@ IP-бакет, реальное ожидание времени, заголов�
 **backend-интеграционными тестами** в `manzil-core`, а здесь учтены, чтобы
 coverage-map их засчитывал и в отчётах не было `skipped`.
 
-Всего: **4**.
+Всего: **7**.
 
 | Слой | ID | Сценарий | Почему только backend |
 |---|---|---|---|
@@ -14,3 +14,6 @@ coverage-map их засчитывал и в отчётах не было `skipp
 | api | API-AUTH-058 | Refresh fail-open при неразрешимом аккаунте (defensive) | Refresh fail-open при внутреннем сбое БД — fault injection; backend-тест с моком сбоя. |
 | api | API-AUTH-081 | Валидный JWT, но subject не UUID → 401 (локализованный, другой code) | JWT с не-UUID subject — нужен ключ подписи Keycloak; backend/security-тест. |
 | api | API-SHP-182 | Негатив: пользователь без shipperCompanyId → 403 |  |
+| api | API-TND-061 | Выбранный оффер не PENDING (уже REJECTED/SELECTED) → not-selectable |  |
+| api | API-WH-128 | Capability: офисная роль без ORDER_REVIEW (снят грант) → 403 error.forbidden |  |
+| api | API-WH-138 | Каллер без shipperCompanyId → 403 error.forbidden |  |
