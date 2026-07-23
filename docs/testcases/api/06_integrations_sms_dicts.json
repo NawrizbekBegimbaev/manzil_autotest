@@ -1448,12 +1448,12 @@
   "id": "API-INT-130",
   "razdel": "API — Интеграции, SMS, справочники",
   "screen": "POST /api/v1/shipper/orders/{orderId}/blacklist",
-  "scenario": "Водитель не найден",
+  "scenario": "Несуществующий driverId → проверка привязки срабатывает раньше lookup",
   "precond": "SHIPPER_ADMIN с capability BLACKLIST; заказ COMPLETED.",
   "steps": "1. Запрос: POST /api/v1/shipper/orders/{orderId}/blacklist с driverId, которого нет в системе.",
-  "expected": "HTTP 404, code=error.driver.not-found.",
+  "expected": "HTTP 404, code=error.order.driver-not-attached. Проверка привязки водителя к заказу (existsByOrderIdAndDriverId) выполняется РАНЬШЕ lookup водителя, поэтому неизвестный driverId неотличим от непривязанного. Код error.driver.not-found достижим лишь в orphan-состоянии (водитель привязан, но запись водителя удалена) — чёрным ящиком не воспроизводится.",
   "priority": "Medium",
-  "comment": "api|negative"
+  "comment": "api|negative · уточнено по факту: guard-порядок — driver-not-attached раньше driver.not-found (2026-07-23)"
  },
  {
   "id": "API-INT-131",
@@ -1515,11 +1515,11 @@
   "razdel": "API — Интеграции, SMS, справочники",
   "screen": "POST /api/v1/shipper/orders/{orderId}/blacklist",
   "scenario": "Capability: нет BLACKLIST",
-  "precond": "Выполнен вход под SHIPPER_ADMIN, у которого нет capability BLACKLIST.",
+  "precond": "Выполнен вход под SHIPPER_OPERATOR (shipper-роль без capability BLACKLIST по умолчанию — BLACKLIST admin-only-grantable, нет в дефолтах ролей). Есть COMPLETED-заказ с привязанным водителем.",
   "steps": "1. Запрос: POST /api/v1/shipper/orders/{orderId}/blacklist с валидным телом.",
   "expected": "HTTP 403, code=error.forbidden — отказ из-за отсутствия capability (отличается от ролевого отказа с code=FORBIDDEN).",
   "priority": "High",
-  "comment": "api|capability"
+  "comment": "api|capability · уточнено по факту: BLACKLIST есть только у ADMIN (ADMIN=all); роль без неё — OPERATOR/MANAGER/DISPATCHER (2026-07-23)"
  },
  {
   "id": "API-INT-137",

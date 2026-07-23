@@ -46,6 +46,8 @@ class OrderFactory:
         self.carrier = carrier_token  # TRANSPORT_ADMIN — bid, drivers, start
         self._refs = None
         self._orders: list = []
+        # Водители, привязанные последним make() с драйверами (для blacklist-тестов и т.п.).
+        self.last_drivers: list[dict] = []  # [{id, phone}]
 
     # ── low-level ──
     def _req(self, method, path, token, ok=None, **kw):
@@ -112,10 +114,13 @@ class OrderFactory:
             return self._get(oid)
 
         assignments = []
+        self.last_drivers = []
         for _ in range(drivers_count):
+            phone = "+99890" + _digits(7)
             drv = self._req("POST", "/transport/drivers", self.carrier, ok=(201,),
-                            json={"fullName": "AT Driver", "phone": "+99890" + _digits(7)}).json()
+                            json={"fullName": "AT Driver", "phone": phone}).json()
             assignments.append({"driverId": drv["id"], "licensePlate": "01A" + _digits(4), "cardId": _digits(18)})
+            self.last_drivers.append({"id": drv["id"], "phone": phone})
         self._req("POST", f"/transport/orders/{oid}/drivers", self.carrier, ok=(200, 201),
                   json={"drivers": assignments})
         self._req("POST", f"/transport/orders/{oid}/start", self.carrier, ok=(200, 201))
