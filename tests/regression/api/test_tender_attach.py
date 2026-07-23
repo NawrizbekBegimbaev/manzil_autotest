@@ -798,7 +798,7 @@ def test_locations_rbac_157(api):
 
 @pytest.mark.medium
 @pytest.mark.lifecycle
-@pytest.mark.xfail(reason="BUG-038: гонка attach одного водителя на два заказа → двойное назначение (лок на заказ, не на водителя)", strict=True)
+@pytest.mark.xfail(reason="BUG-038 / MNZL-280: гонка attach одного водителя на два заказа → двойное назначение (лок на заказ, не на водителя)", strict=True)
 def test_race_attach_driver_two_orders(carrier, mk_driver, order_factory, cfg):
     """ГЛАВНАЯ ГОНКА: один водитель прикрепляется к ДВУМ разным заказам параллельно. Лок — на
     ЗАКАЗ (разные строки), не на водителя → busy-check пропускает оба. Инвариант: водитель не
