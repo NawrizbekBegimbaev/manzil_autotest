@@ -575,6 +575,27 @@ def test_warehouses_search_073(sa):
     assert _page(r).get("totalElements") == 0, f"[API-SA-073] expected empty, got {_page(r).get('totalElements')}"
 
 
+@pytest.mark.high
+def test_warehouse_division_resolve_074(sa, api):
+    """Division-склады CN/KG в super-admin списке: cityName = название района, country резолвится."""
+    admin = api("shipper_admin")
+    cn_name = "AT-CN-" + uuid.uuid4().hex[:6]
+    kg_name = "AT-KG-" + uuid.uuid4().hex[:6]
+    cn = admin.post("/shipper/warehouses", json={"divisionCountry": "CN", "divisionCode": "11", "name": cn_name, "address": "addr"})
+    kg = admin.post("/shipper/warehouses", json={"divisionCountry": "KG", "divisionCode": "KG05000000000", "name": kg_name, "address": "addr"})
+    assert cn.status_code == 201 and kg.status_code == 201, f"[API-SA-074] div-warehouse setup: cn={cn.status_code} {cn.text[:120]} kg={kg.status_code} {kg.text[:120]}"
+    try:
+        def _find(name):
+            rows = sa.get(f"/super-admin/warehouses?search={name}&size=50").json().get("content", [])
+            return next((w for w in rows if w.get("name") == name), None)
+        cn_row, kg_row = _find(cn_name), _find(kg_name)
+        assert cn_row and cn_row.get("country") == "China" and cn_row.get("cityName"), f"[API-SA-074] CN: {cn_row}"
+        assert kg_row and kg_row.get("country") == "Kyrgyzstan" and kg_row.get("cityName"), f"[API-SA-074] KG: {kg_row}"
+    finally:
+        admin.delete(f"/shipper/warehouses/{cn.json()['id']}")
+        admin.delete(f"/shipper/warehouses/{kg.json()['id']}")
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  COMPANIES + DRIVERS + RBAC + EDGE (API-SA-075…166)
 #  All creations go through `track` (guaranteed cleanup even on assert failure).

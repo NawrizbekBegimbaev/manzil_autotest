@@ -457,9 +457,9 @@
   "scenario": "Валидация: невалидный формат loadFrom → 400",
   "precond": "Токен TRANSPORT_ADMIN.",
   "steps": "1. Запрос: GET /api/v1/transport/feed?loadFrom=31-07-2026 (дата не в формате ГГГГ-ММ-ДД).",
-  "expected": "HTTP 400 Bad Request; в теле code='error.bad-request' — дата принимается только в формате ГГГГ-ММ-ДД.",
+  "expected": "HTTP 400 Bad Request; в теле code='BAD_REQUEST' — дата принимается только в формате ГГГГ-ММ-ДД.",
   "priority": "Low",
-  "comment": "api|validation"
+  "comment": "api|validation · уточнено 2026-07-22: невалидный формат даты в query → framework BAD_REQUEST (type-mismatch), не error.bad-request"
  },
  {
   "id": "API-TND-043",
@@ -499,11 +499,11 @@
   "razdel": "API — Тендер и перевозчик",
   "screen": "GET /api/v1/transport/feed/{id}",
   "scenario": "Заказ вне scope (не в ленте и без бида) → 404",
-  "precond": "Токен TRANSPORT_ADMIN. Заказ вне зоны видимости компании: статус DRAFT, либо город не обслуживается, либо чужой заказ — и ставки по нему у компании нет.",
+  "precond": "Токен TRANSPORT_ADMIN. Заказ в НЕ-marketplace статусе (напр. SELECTED/DRAFT/COMPLETED), по которому у этой компании нет ставки.",
   "steps": "1. Запрос: GET /api/v1/transport/feed/{id}.",
-  "expected": "HTTP 404 Not Found; в теле code с текстом «заказ не найден» — недоступный заказ не раскрывается.",
+  "expected": "HTTP 404, code='error.order.not-found'. Видимость detail = статус PUBLISHED/QUOTED (маркетплейс, доступен любому перевозчику) ИЛИ наличие своей ставки; фильтры города/blacklist/exclusion действуют только на ленту-список, не на detail. Заказ вне маркетплейса и без ставки не раскрывается.",
   "priority": "High",
-  "comment": "api|tenancy"
+  "comment": "api|tenancy · уточнено по факту 2026-07-22: canView(TRANSPORT)=marketplace-статус ИЛИ hasBid; город/blacklist фильтруют только ленту. Прежняя формулировка «город не обслуживается→404» неверна для detail"
  },
  {
   "id": "API-TND-047",
@@ -564,34 +564,34 @@
   "id": "API-TND-052",
   "razdel": "API — Тендер и перевозчик",
   "screen": "GET /api/v1/shipper/orders/{orderId}/offers",
-  "scenario": "Capability: MANAGER БЕЗ гранта TENDER_SELECT → 403 error.forbidden",
-  "precond": "Токен SHIPPER_MANAGER, у пользователя НЕ выдано индивидуальное право TENDER_SELECT. Заказ его компании со ставками.",
+  "scenario": "Capability: MANAGER БЕЗ гранта SEE_PRICES → 403 error.forbidden",
+  "precond": "Токен SHIPPER_MANAGER, у пользователя НЕ выдано индивидуальное право SEE_PRICES. Заказ его компании со ставками.",
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/offers.",
-  "expected": "HTTP 403 Forbidden; в теле code='error.forbidden'. Роль проходит проверку, но без права TENDER_SELECT просмотр ставок недоступен.",
+  "expected": "HTTP 403 Forbidden; в теле code='error.forbidden'. Роль проходит проверку, но без права SEE_PRICES просмотр ставок недоступен.",
   "priority": "High",
-  "comment": "api|capability|rbac"
+  "comment": "api|capability|rbac · уточнено по факту 2026-07-22: GET offers гейтится SEE_PRICES (список показывает цены конкурентов), TENDER_SELECT нужен только для POST select"
  },
  {
   "id": "API-TND-053",
   "razdel": "API — Тендер и перевозчик",
   "screen": "GET /api/v1/shipper/orders/{orderId}/offers",
-  "scenario": "Capability: MANAGER С грантом TENDER_SELECT → 200",
-  "precond": "Токен SHIPPER_MANAGER, пользователю выдано индивидуальное право TENDER_SELECT. Заказ его компании со ставками.",
+  "scenario": "Capability: MANAGER С грантом SEE_PRICES → 200",
+  "precond": "Токен SHIPPER_MANAGER, пользователю выдано индивидуальное право SEE_PRICES. Заказ его компании со ставками.",
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/offers.",
-  "expected": "HTTP 200 OK; список ставок возвращается — действующие права пользователя содержат TENDER_SELECT.",
+  "expected": "HTTP 200 OK; список ставок возвращается — действующие права пользователя содержат SEE_PRICES.",
   "priority": "High",
-  "comment": "api|capability|rbac"
+  "comment": "api|capability|rbac · уточнено по факту 2026-07-22: GET offers гейтится SEE_PRICES (список показывает цены конкурентов), TENDER_SELECT нужен только для POST select"
  },
  {
   "id": "API-TND-054",
   "razdel": "API — Тендер и перевозчик",
   "screen": "GET /api/v1/shipper/orders/{orderId}/offers",
   "scenario": "Capability: OPERATOR и DISPATCHER без гранта → 403 error.forbidden",
-  "precond": "Токены SHIPPER_OPERATOR и SHIPPER_DISPATCHER без права TENDER_SELECT (в наборах прав по умолчанию этим ролям оно не выдаётся).",
+  "precond": "Токены SHIPPER_OPERATOR и SHIPPER_DISPATCHER без права SEE_PRICES (в наборах прав по умолчанию этим ролям оно не выдаётся).",
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/offers поочерёдно под каждой из двух ролей.",
   "expected": "В обоих случаях HTTP 403 Forbidden; в теле code='error.forbidden'.",
   "priority": "High",
-  "comment": "api|capability|rbac"
+  "comment": "api|capability|rbac · уточнено по факту 2026-07-22: GET offers гейтится SEE_PRICES (список показывает цены конкурентов), TENDER_SELECT нужен только для POST select"
  },
  {
   "id": "API-TND-055",
@@ -668,7 +668,8 @@
   "steps": "1. Запрос: POST /api/v1/shipper/orders/{orderId}/offers/{offerId}/select.",
   "expected": "HTTP 409 Conflict; в теле code='error.order.not-selectable' — для невалидного статуса ставки возвращается тот же код, что и для невалидного статуса заказа.",
   "priority": "High",
-  "comment": "api|negative|lifecycle"
+  "comment": "api|negative|lifecycle · automation:backend 2026-07-22: не-PENDING оффер на QUOTED-заказе недостижим чёрным ящиком (select уводит из QUOTED, republish-REVERT восстанавливает PENDING); порядок проверки offer!=PENDING→not-selectable подтверждён по OfferService Проверяется интеграционным тестом manzil-core: порядок guard'ов в OfferService.selectWinner — status!=QUOTED→error.order.not-selectable ПРЕЖДЕ offer-lookup; offer!=PENDING→error.offer.not-selectable (тот же код, что и невалидный статус заказа). Чёрным ящиком состояние «не-PENDING оффер на QUOTED-заказе» недостижимо.",
+  "automation": "backend"
  },
  {
   "id": "API-TND-062",
@@ -996,9 +997,9 @@
   "scenario": "Happy path: список водителей компании + busy/completed индикаторы",
   "precond": "Токен TRANSPORT_ADMIN. В компании есть водители: часть занята на заказах, часть свободна; у других компаний тоже есть водители.",
   "steps": "1. Запрос: GET /api/v1/transport/drivers.",
-  "expected": "HTTP 200 OK; постраничный ответ: 20 на страницу по умолчанию, новые первыми. У каждого водителя: признак занятости — currentOrderId и отображаемый номер заказа (если занят), а также completedCount (число завершённых заказов). В списке только водители своей компании.",
+  "expected": "HTTP 200 OK; постраничный ответ: 20 на страницу по умолчанию, новые первыми. У каждого водителя: признак занятости — currentOrderId и отображаемый номер заказа (если занят), а также completedOrders (число завершённых заказов). В списке только водители своей компании.",
   "priority": "High",
-  "comment": "api|positive"
+  "comment": "api|positive · уточнено по факту 2026-07-22: поле счётчика — completedOrders"
  },
  {
   "id": "API-TND-092",

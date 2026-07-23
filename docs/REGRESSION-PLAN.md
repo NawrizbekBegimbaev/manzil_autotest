@@ -8,21 +8,21 @@ and not iplimit and not slow"` — только Passed/Failed/XFail, ноль sk
 |---|---|---|---|
 | 0 | Инфраструктура (dev-провизининг, фикстуры, coverage_map) | — | ✅ |
 | 1 | API Auth / me / devices (`test_auth.py`) | 117 | ✅ 117/117 |
-| 2 | API Super-admin (`test_superadmin.py`) | 166 | ✅ 165/166 (1 pending: SA-074) |
+| 2 | API Super-admin (`test_superadmin.py`) | 166 | ✅ 166/166 |
 | 3 | API Shipper (staff+orders, `test_shipper.py` + `test_shipper_orders.py`) | 182 | ✅ 182/182 (1 backend: SHP-182) |
-| 4 | API Tendering/Transport · Warehouse/Dispatch · Integrations/SMS · RBAC | 500 | ⏳ |
+| 4a | API Tendering/Transport (`test_tender_*.py`) | 157 | ✅ 157/157 (backend: TND-061) |
+| 4b | API Warehouse/Dispatch · Integrations/SMS · RBAC | ~343 | ⏳ |
 | 5 | Web (Playwright) | 370 | ⏳ |
 | 6 | Mobile (Maestro) | 119 | ⏳ |
 
-## ⏳ Отложенные кейсы (automation: pending) — добрать в Фазе 4
+## ✅ Отложенные кейсы (pending) — обнулены
 
-- **API-SA-074** — резолв division-склада (CN/KG): нужен склад, привязанный к району Китая/
-  Кыргызстана (не к городу справочника). Хелпер создания division-склада появится при
-  warehouse/dispatch-модуле (Фаза 4). **Единственный оставшийся pending.**
+- **API-SA-074** (division-склад CN/KG) — ЗАКРЫТ 2026-07-22 (`test_warehouse_division_resolve_074`).
+- **API-SA-108/129** — закрыты в Фазе 3 (order-lifecycle хелпер).
 
-**Снято в Фазе 3** (order-lifecycle хелпер `tests/regression/order_lifecycle.py::OrderFactory`):
-- ✅ **API-SA-108/129** — удаление shipper/transport с активными заявками → 409 `has-active-orders`
-  (`test_superadmin.py::test_shipper_delete_active_orders_409_108` / `..._transport_..._129`).
+**pending по всему набору = 0.** Backend-кейсы (не покрываются ЧЯ, считаются покрытыми):
+AUTH-043/058/081, SA (нет), SHP-182, TND-061 — итого 5.
+
 
 ## Order-lifecycle хелпер (Фаза 3)
 
@@ -36,5 +36,6 @@ IN_TRANSIT. Refs (vehicleType + 2 локации) кэшируются по то
 - **MNZL-269** — DRIVER входит в `TRANSPORT_COMPANY_APP` (кейс API-AUTH-011: staging 403 → dev 200).
 - **MNZL-245** — пагинация вложена в `page` (16 list-кейсов помечены; `_page` строгий по
   `cfg.page_shape`).
-- **BUG-035** (открыт) — гонка cancel/enter-1c заказа отдаёт 500 вместо 409 concurrent-modification
-  (нет пессимистичного лока, `@Version`-конфликт не мапится). Тесты SHP-080/116 — `xfail(strict)`.
+- **BUG-035** (MNZL-275, открыт) — гонка cancel/enter-1c → 500 вместо 409 (нет лока). SHP-080/116 xfail(strict).
+- **BUG-038** (MNZL-280, открыт) — гонка attach одного водителя на два заказа → двойное назначение (лок на заказ, не на водителя). test_race_attach_driver_two_orders xfail(strict).
+- **BUG-030/031** — по API-верификации КЛИЕНТСКИЕ (сервер отдаёт различимые коды / available по контракту).

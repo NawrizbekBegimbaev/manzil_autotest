@@ -86,12 +86,12 @@ class OrderFactory:
         return next((o for o in rows if str(o.get("id")) == str(oid)), {"id": oid})
 
     # ── build ──
-    def make(self, status: str = "PUBLISHED") -> dict:
+    def make(self, status: str = "PUBLISHED", drivers_count: int = 1) -> dict:
         assert status in self.STATUSES, f"unknown status {status}"
         vt, locs = self._ensure_refs()
         o = self._req("POST", "/warehouse/orders", self.wh, ok=(201,), json={
             "cargoType": "AUTO", "currency": "CNY", "loadDate": datetime.date.today().isoformat(),
-            "vehicleTypeId": vt, "driversCount": 1, "fromWarehouseId": locs[0], "toWarehouseId": locs[1],
+            "vehicleTypeId": vt, "driversCount": drivers_count, "fromWarehouseId": locs[0], "toWarehouseId": locs[1],
             "notes": "AT lifecycle"}).json()
         oid = o["id"]
         self._orders.append(oid)
@@ -111,11 +111,13 @@ class OrderFactory:
                       json={"reason": "AT lifecycle teardown"})
             return self._get(oid)
 
-        drv = self._req("POST", "/transport/drivers", self.carrier, ok=(201,),
-                        json={"fullName": "AT Driver", "phone": "+99890" + _digits(7)}).json()
+        assignments = []
+        for _ in range(drivers_count):
+            drv = self._req("POST", "/transport/drivers", self.carrier, ok=(201,),
+                            json={"fullName": "AT Driver", "phone": "+99890" + _digits(7)}).json()
+            assignments.append({"driverId": drv["id"], "licensePlate": "01A" + _digits(4), "cardId": _digits(18)})
         self._req("POST", f"/transport/orders/{oid}/drivers", self.carrier, ok=(200, 201),
-                  json={"drivers": [{"driverId": drv["id"], "licensePlate": "01A" + _digits(3) + "AA",
-                                     "cardId": _digits(18)}]})
+                  json={"drivers": assignments})
         self._req("POST", f"/transport/orders/{oid}/start", self.carrier, ok=(200, 201))
         if status == "IN_WORK":
             return self._get(oid)

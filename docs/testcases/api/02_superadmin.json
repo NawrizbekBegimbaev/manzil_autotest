@@ -811,8 +811,7 @@
   "steps": "1. Запрос: GET /api/v1/super-admin/warehouses (заголовок Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200. Для склада с районом Китая: cityName = название района, country=\"China\". Для склада с районом Кыргызстана: cityName = русское название района (если его нет — английское), country=\"Kyrgyzstan\".",
   "priority": "Low",
-  "comment": "api|positive",
-  "automation": "pending",
+  "comment": "api|positive · автоматизировано 2026-07-22: division-склады CN/KG создаются через POST /shipper/warehouses, резолв cityName/country проверен",
   "automationNote": "нужны кросс-доменные хелперы (order lifecycle / division-склад) — добрать в Фазе 3/4"
  },
  {
