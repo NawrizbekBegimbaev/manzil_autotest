@@ -45,6 +45,18 @@ class LoginPage(BasePage):
         self.country_button.first.click()
         return self.page.get_by_role("menu").last.get_by_role("menuitem")
 
+    def open_lang_menu(self):
+        """Открыть меню языков (пункты: Русский / O'zbek / Кыргызча / 中文 / ئۇيغۇرچە)."""
+        self.lang_switcher.click()
+        return self.page.get_by_role("menu").last.get_by_role("menuitem")
+
+    @property
+    def phone_clear_button(self):
+        """Крестик очистки поля телефона (виден только при непустом значении)."""
+        return self.page.locator(
+            ".MuiInputBase-root:has(input[placeholder='Введите номер телефона']) button"
+        ).last
+
     def open(self) -> "LoginPage":
         self.goto(self.PATH)
         return self
