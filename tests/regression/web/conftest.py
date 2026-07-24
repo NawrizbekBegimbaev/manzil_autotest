@@ -82,7 +82,10 @@ def page_as(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dict, _storage_
 
     yield _open
     for ctx in contexts:
-        ctx.close()
+        try:
+            ctx.close()
+        except Exception:  # noqa: BLE001 — close-гонка при незавершённой навигации: teardown-шум, не падение теста
+            pass
 
 
 @pytest.fixture
@@ -118,7 +121,10 @@ def web_page(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dict):
 
     yield _open
     for ctx in contexts:
-        ctx.close()
+        try:
+            ctx.close()
+        except Exception:  # noqa: BLE001 — close-гонка при незавершённой навигации: teardown-шум, не падение теста
+            pass
 
 
 @pytest.fixture
@@ -136,7 +142,10 @@ def fresh_context_no_ru(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dic
 
     yield _open
     for ctx in contexts:
-        ctx.close()
+        try:
+            ctx.close()
+        except Exception:  # noqa: BLE001 — close-гонка при незавершённой навигации: teardown-шум, не падение теста
+            pass
 
 
 @pytest.fixture
