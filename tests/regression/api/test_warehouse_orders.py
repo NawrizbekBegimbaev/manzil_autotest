@@ -435,7 +435,7 @@ def foreign_order(dev_api, cfg, api_dev_roles):
     from tests.regression.order_lifecycle import OrderFactory
     sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
     aphone = "+99890" + _d(7)
-    body = {"name": f"AT-B-{_d(6)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
+    body = {"name": f"AT-B-{_d(10)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
             "tin": _d(9), "address": "Tashkent, Sayyod 1",
             "admin": {"fullName": "AT B Admin", "phone": aphone, "password": cfg.dev_account_password}}
     r = dev_api.request("POST", "/super-admin/shipper-companies", sa, json=body)
@@ -459,7 +459,7 @@ def empty_wh(dev_api, cfg):
     """Склад свежей пустой компании (без заказов) — для empty-list / empty-summary."""
     sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
     aphone = "+99890" + _d(7)
-    body = {"name": f"AT-E-{_d(6)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
+    body = {"name": f"AT-E-{_d(10)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
             "tin": _d(9), "address": "Tashkent, Sayyod 1",
             "admin": {"fullName": "AT E Admin", "phone": aphone, "password": cfg.dev_account_password}}
     sid = dev_api.request("POST", "/super-admin/shipper-companies", sa, json=body).json()["id"]

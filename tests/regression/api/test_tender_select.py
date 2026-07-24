@@ -75,7 +75,7 @@ def fresh_carrier(dev_api, cfg):
 
     def _mk():
         phone = "+99890" + _d(7)
-        body = {"name": f"AT-TC-{_d(6)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
+        body = {"name": f"AT-TC-{_d(10)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
                 "transportTypes": ["AUTO"], "isAll": True, "cityIds": [], "blacklistWarehouseIds": [],
                 "admin": {"fullName": "AT C2", "phone": phone, "password": cfg.dev_account_password}}
         r = dev_api.request("POST", "/super-admin/transport-companies", sa, json=body)
@@ -124,7 +124,7 @@ def foreign_order_id(dev_api, cfg, api_dev_roles):
 
     sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
     aphone = "+99890" + _d(7)
-    body = {"name": f"AT-B-{_d(6)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
+    body = {"name": f"AT-B-{_d(10)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
             "tin": _d(9), "address": "Tashkent, Sayyod 1",
             "admin": {"fullName": "AT B Admin", "phone": aphone, "password": cfg.dev_account_password}}
     r = dev_api.request("POST", "/super-admin/shipper-companies", sa, json=body)

@@ -59,7 +59,8 @@ def _uprefix() -> str:
 
 
 def _uname(kind: str) -> str:
-    return f"AT-{kind}-{_digits(6)}"
+    # 10 цифр — иначе имена компаний коллидят с орфанами прошлых прогонов (409 name-already-used)
+    return f"AT-{kind}-{_digits(10)}"
 
 
 @dataclass

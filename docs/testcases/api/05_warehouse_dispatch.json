@@ -1472,7 +1472,7 @@
   "steps": "1. Запрос: GET /api/v1/shipper/orders/{orderId}/dispatch-log (Authorization: Bearer {accessToken}).",
   "expected": "HTTP 200 OK. Записей по удалённому пользователю и по получателю с нецелевой ролью в журнале нет — такие строки отбрасываются и в ответ не попадают.",
   "priority": "Low",
-  "comment": "api|positive · automation:pending 2026-07-23: нужен хелпер провизининга dispatch/view-событий (фильтрация удалённого получателя) — Фаза 4b integrations · закрыто 2026-07-23: view-события (POST /orders/{id}/view) в test_int_notifications.py"
+  "comment": "api|positive · тест робастен к потоку push-получателей: проверяет исчезновение строки-ПРОСМОТРА удалённого перевозчика"
  },
  {
   "id": "API-WH-135",

@@ -118,7 +118,7 @@ def fresh_company(dev_api, cfg, api_dev_roles):
     def _mk():
         aphone = "+99890" + _d(7)
         r = dev_api.request("POST", "/super-admin/shipper-companies", sa, json={
-            "name": f"AT-B-{_d(6)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
+            "name": f"AT-B-{_d(10)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
             "tin": _d(9), "address": _ADDR, "admin": {"fullName": "AT B Admin", "phone": aphone, "password": cfg.dev_account_password}})
         assert r.status_code == 201, f"fresh company: {r.status_code} {r.text[:160]}"
         cid = r.json()["id"]

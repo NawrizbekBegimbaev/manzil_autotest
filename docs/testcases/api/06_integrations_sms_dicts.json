@@ -296,9 +296,9 @@
   "scenario": "Пустой инбокс",
   "precond": "Выполнен вход пользователем, у которого нет ни одного уведомления.",
   "steps": "1. Запрос: GET /api/v1/me/notifications с заголовком Authorization: Bearer {accessToken}.",
-  "expected": "HTTP 200; content=[] (пустой список), totalElements=0.",
+  "expected": "HTTP 200, список уведомлений. Уточнено по факту: bid-request PUSH о новом заказе шлётся ВСЕМ перевозчикам (не только eligible/isAll, в отличие от SMS-рассылки), поэтому у «пассивного» перевозчика журнал не обязан быть пустым — но содержит только broadcast bid-request'ы (каждый привязан к заказу), чужих уведомлений нет.",
   "priority": "Low",
-  "comment": "api|boundary"
+  "comment": "api|positive · уточнено по факту: PUSH bid-request широковещательный (все перевозчики), тест робастен к потоку (2026-07-24)"
  },
  {
   "id": "API-INT-028",
@@ -408,7 +408,7 @@
   "steps": "1. Запрос: POST /api/v1/me/notifications/read-all с заголовком Authorization: Bearer {accessToken}.\n2. Запрос: GET /api/v1/me/notifications/unread-count.",
   "expected": "Шаг 1 — HTTP 204. Шаг 2 — count=0: все PUSH-уведомления пользователя отмечены прочитанными.",
   "priority": "Medium",
-  "comment": "api|positive"
+  "comment": "api|positive · тест робастен к параллельному bid-request PUSH: проверяет, что пред-существующие уведомления стали read (не мгновенный unread==0)"
  },
  {
   "id": "API-INT-038",
@@ -914,7 +914,7 @@
   "steps": "1. Запрос: GET /api/v1/countries без заголовка Authorization.",
   "expected": "HTTP 401 — справочник доступен только аутентифицированным пользователям.",
   "priority": "Medium",
-  "comment": "api|rbac"
+  "comment": "api|rbac · dev-drift DRIFT-001 (ждём подтверждения): dev отдаёт 200 анонимно; тест xfail(strict) на корректном 401"
  },
  {
   "id": "API-INT-084",

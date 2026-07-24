@@ -78,7 +78,7 @@ def fresh_carrier(dev_api, cfg):
 
     def _mk(is_all=True, city_ids=None, blacklist=None):
         phone = "+99890" + _d(7)
-        body = {"name": f"AT-TC-{_d(6)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
+        body = {"name": f"AT-TC-{_d(10)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
                 "transportTypes": ["AUTO"], "isAll": is_all, "cityIds": city_ids or [],
                 "blacklistWarehouseIds": blacklist or [],
                 "admin": {"fullName": "AT Carrier2", "phone": phone, "password": cfg.dev_account_password}}
@@ -503,9 +503,20 @@ def test_feed_hides_already_bid_034(fresh_carrier, order_factory):
 
 @pytest.mark.high
 @pytest.mark.tenancy
-def test_feed_city_not_served_035(fresh_carrier, order_factory, two_cities):
-    o = order_factory.make("PUBLISHED")  # склады в two_cities[0]
-    carrier2, _, _ = fresh_carrier(is_all=False, city_ids=[two_cities[1]])  # обслуживает другой город
+def test_feed_city_not_served_035(fresh_carrier, order_factory, dev_api, cfg):
+    """TND-035: перевозчик, обслуживающий город, отличный от города заказа, НЕ видит заказ в ленте.
+    Детерминированно: читаем ФАКТИЧЕСКИЙ город склада заказа и даём carrier2 заведомо ДРУГОЙ город
+    (не полагаемся на совпадение с произвольным two_cities — под параллельным созданием городов оно
+    расходится с городом фабрики)."""
+    o = order_factory.make("PUBLISHED")
+    whs = _content(order_factory.api.request("GET", "/shipper/warehouses?size=200", order_factory.admin))
+    o_wh = {o.get("fromWarehouseId"), o.get("toWarehouseId")}
+    o_cities = {w.get("cityId") for w in whs if w.get("id") in o_wh and w.get("cityId")}
+    sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
+    all_cities = _content(dev_api.request("GET", "/super-admin/cities?size=200", sa))
+    other = next((c["id"] for c in all_cities if c["id"] not in o_cities), None)
+    assert other, "[API-TND-035] нужен город, отличный от города заказа"
+    carrier2, _, _ = fresh_carrier(is_all=False, city_ids=[other])  # обслуживает заведомо другой город
     assert not _in_feed(carrier2, o), "[API-TND-035] заказ вне обслуживаемого города должен быть скрыт"
 
 

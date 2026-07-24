@@ -99,7 +99,7 @@ def fresh_carrier(dev_api, cfg):
 
     def _mk():
         phone = _phone()
-        body = {"name": f"AT-TC-{_d(6)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
+        body = {"name": f"AT-TC-{_d(10)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
                 "transportTypes": ["AUTO"], "isAll": True, "cityIds": [], "blacklistWarehouseIds": [],
                 "admin": {"fullName": "AT C2", "phone": phone, "password": cfg.dev_account_password}}
         r = dev_api.request("POST", "/super-admin/transport-companies", sa, json=body)

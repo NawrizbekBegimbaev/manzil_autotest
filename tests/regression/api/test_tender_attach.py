@@ -104,7 +104,7 @@ def fresh_carrier(dev_api, cfg):
 
     def _mk():
         phone = "+99890" + _d(7)
-        body = {"name": f"AT-TC-{_d(6)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
+        body = {"name": f"AT-TC-{_d(10)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
                 "transportTypes": ["AUTO"], "isAll": True, "cityIds": [], "blacklistWarehouseIds": [],
                 "admin": {"fullName": "AT C2", "phone": phone, "password": cfg.dev_account_password}}
         r = dev_api.request("POST", "/super-admin/transport-companies", sa, json=body)
@@ -587,6 +587,7 @@ def test_start_not_owned_136(carrier, order_factory):
     assert r.status_code == 404 and _code(r) == "error.order.not-owned-by-transport", f"[API-TND-136] {r.status_code}/{_code(r)}"
 
 
+@pytest.mark.xdist_group("start_race")
 @pytest.mark.medium
 @pytest.mark.lifecycle
 def test_start_double_race_137(carrier, mk_driver, order_factory, cfg):

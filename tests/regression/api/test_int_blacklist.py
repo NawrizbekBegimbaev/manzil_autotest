@@ -120,7 +120,7 @@ def fresh_company(dev_api, cfg, api_dev_roles):
 
     def _mk():
         aphone = "+99890" + _d(7)
-        body = {"name": f"AT-BL-{_d(6)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
+        body = {"name": f"AT-BL-{_d(10)}", "prefix": "".join(random.choices(string.ascii_uppercase, k=4)),
                 "tin": _d(9), "address": _ADDR, "admin": {"fullName": "AT BL Admin", "phone": aphone, "password": cfg.dev_account_password}}
         r = dev_api.request("POST", "/super-admin/shipper-companies", sa, json=body)
         assert r.status_code == 201, f"fresh company setup: {r.status_code} {r.text[:160]}"

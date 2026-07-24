@@ -46,10 +46,12 @@ def fresh_carrier(dev_api, cfg):
     created = []
     sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
 
-    def _mk():
+    def _mk(is_all=True):
+        # is_all=False + cityIds=[] → перевозчик не eligible ни к одному заказу → не получает
+        # bid-request PUSH (нужно для «пустого журнала» под параллельным потоком публикаций).
         phone = "+99890" + _d(7)
-        body = {"name": f"AT-TC-{_d(6)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
-                "transportTypes": ["AUTO"], "isAll": True, "cityIds": [], "blacklistWarehouseIds": [],
+        body = {"name": f"AT-TC-{_d(10)}", "tin": _d(9), "address": "Tashkent, Sayyod 1",
+                "transportTypes": ["AUTO"], "isAll": is_all, "cityIds": [], "blacklistWarehouseIds": [],
                 "admin": {"fullName": "AT C2", "phone": phone, "password": cfg.dev_account_password}}
         cid = dev_api.request("POST", "/super-admin/transport-companies", sa, json=body).json()["id"]
         created.append(cid)
@@ -91,9 +93,15 @@ def test_notif_pagination_026(carrier_notif):
 
 @pytest.mark.low
 def test_notif_empty_027(fresh_carrier):
-    carrier, _ = fresh_carrier()  # без заказа
-    r = carrier.get("/me/notifications")
-    assert r.status_code == 200 and _content(r) == [], f"[API-INT-027] {r.text[:120]}"
+    """INT-027: свежий перевозчик без СВОИХ заказов. Уточнено по факту: bid-request PUSH шлётся
+    ВСЕМ перевозчикам (не только eligible/isAll — проверено), поэтому под параллельными публикациями
+    журнал может быть непуст, но содержит ТОЛЬКО broadcast bid-request'ы (каждый привязан к заказу
+    через orderDisplayNumber) — никаких чужих/иных уведомлений не протекает."""
+    carrier, _ = fresh_carrier(is_all=False)
+    rows = _content(carrier.get("/me/notifications?size=200"))
+    assert isinstance(rows, list), f"[API-INT-027] {rows}"
+    leaked = [r for r in rows if not r.get("orderDisplayNumber")]
+    assert not leaked, f"[API-INT-027] непривязанное/чужое уведомление у пассивного перевозчика: {leaked[:1]}"
 
 
 @pytest.mark.medium
@@ -128,12 +136,15 @@ def test_unread_count_031(carrier_notif):
 
 @pytest.mark.high
 def test_notif_read_032(carrier_notif):
+    """INT-032: отметка уведомления прочитанным. Робастно к параллельному bid-request потоку:
+    проверяем, что ЭТО уведомление стало read=true (а не дельту счётчика, которая гонится
+    с новоприбывшими broadcast-уведомлениями)."""
     carrier, rows = carrier_notif
-    before = carrier.get("/me/notifications/unread-count").json()["unread"]
     nid = rows[0]["id"]
     assert carrier.post(f"/me/notifications/{nid}/read").status_code == 204, "[API-INT-032] read"
-    after = carrier.get("/me/notifications/unread-count").json()["unread"]
-    assert after == before - 1, f"[API-INT-032] счётчик: {before}→{after}"
+    after = _content(carrier.get("/me/notifications?size=200"))
+    row = next((r for r in after if r["id"] == nid), None)
+    assert row and row.get("read") is True, f"[API-INT-032] уведомление {nid} не помечено read: {row}"
 
 
 @pytest.mark.low
@@ -168,10 +179,18 @@ def test_notif_read_bad_uuid_036(s_admin):
 
 
 @pytest.mark.medium
+@pytest.mark.xdist_group("notif")
 def test_notif_read_all_037(carrier_notif):
-    carrier, _ = carrier_notif
+    """INT-037: read-all помечает все ТЕКУЩИЕ уведомления прочитанными.
+    Робастно к параллельному потоку bid-request PUSH (isAll-перевозчик получает рассылку по
+    каждому публикуемому заказу в системе): проверяем, что ПРЕД-существующие уведомления стали
+    read=true, а не мгновенный unread-count==0 (который гонится с новоприбывшими)."""
+    carrier, rows = carrier_notif
+    pre_ids = {r["id"] for r in rows}
     assert carrier.post("/me/notifications/read-all").status_code == 204, "[API-INT-037] read-all"
-    assert carrier.get("/me/notifications/unread-count").json()["unread"] == 0, "[API-INT-037] count=0"
+    after = _content(carrier.get("/me/notifications?size=200"))
+    still_unread = [r["id"] for r in after if r["id"] in pre_ids and not r.get("read")]
+    assert not still_unread, f"[API-INT-037] read-all не пометил прочитанными пред-существующие: {still_unread}"
 
 
 @pytest.mark.medium
@@ -312,14 +331,17 @@ def test_wh_dispatch_sort_131(fresh_carrier, s_admin, order_factory):
 
 @pytest.mark.medium
 @pytest.mark.lifecycle
+@pytest.mark.xdist_group("notif")
 def test_wh_dispatch_deleted_filtered_134(fresh_carrier, s_admin, order_factory, dev_api, cfg):
-    """WH-134: получатель-перевозчик удалён → его строка отброшена из журнала."""
+    """WH-134: получатель-перевозчик удалён → его строка отброшена из журнала.
+    Робастно к потоку push-получателей (журнал заказа динамически отражает всех eligible isAll-
+    перевозчиков): смотрим на строки-ПРОСМОТРЫ (lastViewedAt) — единственный смотревший это наш
+    перевозчик; после его удаления просмотровых строк не остаётся."""
     carrier, cid = fresh_carrier()
     o = order_factory.make("PUBLISHED")
     carrier.post(f"/orders/{o['id']}/view")
-    log_before = _content(s_admin.get(f"/shipper/orders/{o['id']}/dispatch-log"))
-    # удалить перевозчика
+    viewers_before = [r for r in _content(s_admin.get(f"/shipper/orders/{o['id']}/dispatch-log")) if r.get("lastViewedAt")]
     sa = dev_api.token(cfg.dev_super_admin_phone, cfg.dev_super_admin_password, "WEB")
     dev_api.request("DELETE", f"/super-admin/transport-companies/{cid}", sa)
-    log_after = _content(s_admin.get(f"/shipper/orders/{o['id']}/dispatch-log"))
-    assert len(log_after) <= len(log_before), f"[API-WH-134] удалённый получатель должен исчезнуть: {len(log_before)}→{len(log_after)}"
+    viewers_after = [r for r in _content(s_admin.get(f"/shipper/orders/{o['id']}/dispatch-log")) if r.get("lastViewedAt")]
+    assert viewers_before and not viewers_after, f"[API-WH-134] удалённый смотревший должен исчезнуть: {len(viewers_before)}→{len(viewers_after)}"

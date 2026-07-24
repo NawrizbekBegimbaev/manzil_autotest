@@ -9,6 +9,17 @@
 
 ---
 
+## DRIFT-001 (ТРЕБУЕТ ПОДТВЕРЖДЕНИЯ разработчиков — НЕ баг и НЕ устаревший кейс)
+### Backend/API | Dictionaries | Dev | `/countries` и `/cities` отдают 200 анонимно вопреки `@PreAuthorize("isAuthenticated()")` в исходниках
+- **Описание:** `GET /api/v1/countries` и `GET /api/v1/cities` **без токена** на dev возвращают **200** (данные справочника). В исходниках (staging-ветка) `DictionaryLookupController` помечен класс-левел `@PreAuthorize("isAuthenticated()")` (Javadoc: «open to any authenticated caller») → ожидается **401**. Dev-билд впереди источника (тот же паттерн, что MNZL-269/245).
+- **Избирательно (проверено на dev 2026-07-24, скан «должны требовать auth»):** открыты ТОЛЬКО `/countries` и `/cities`. Всё остальное корректно 401 без токена: `/me`, `/me/notifications*`, `/me/devices`, `/shipper/**`, `/transport/**`, `/super-admin/**`, `/files`, **`/cn/divisions`, `/kg/divisions`**, `/super-admin/vehicle-types`. Это **точечное решение, НЕ широкий конфиг-дрейф**.
+- **Предположение:** страны/города открыли намеренно для **пред-логинных дропдаунов** (выбор страны/города/региона на форме входа/регистрации до аутентификации). Данные несенситивные (справочные пикер-наборы).
+- **Вопрос разработчикам/девопсу:** страны/города специально открыли анонимно на dev? Это поедет на staging/prod? (если да — обновим `@PreAuthorize`/SecurityConfig и синхронизируем кейсы; если нет — это security-дрейф конфигурации dev.)
+- **Автотест-сторож:** `test_int_dictionaries.py::test_countries_unauth_083` — `xfail(reason="dev-drift, ждём подтверждения", strict=True)`, держит КОРРЕКТНЫЙ контракт (401). XPASS сам сообщит, если dev вернут к 401.
+- **Действие после ответа:** намеренно → синхронизировать INT-083 + кросс-кредит RBAC-085 на «публично» с ключом `(→ MNZL-XXX)`, снять xfail; недосмотр → переоформить как security-баг (эндпойнт открыт вопреки гейту).
+
+---
+
 ## BUG-040 (→ трекер: ключ будет присвоен)
 ### Backend/API | Integrations (1C) | Dev | Батч-эндпойнт вебхука 1С требует Keycloak-JWT → недостижим для 1С (аутентификация только по shared-secret)
 - **Описание:** Одиночный вебхук `POST /api/v1/integrations/1c/shipments/status` в `SecurityConfig` объявлен `permitAll()` (JWT байпасится, шлюз — собственная константно-временная проверка `X-Webhook-Token` в контроллере). Но **батч-эндпойнт** `POST /api/v1/integrations/1c/shipments/status/batch` в `permitAll`-матчер **не добавлен**: матчер — ТОЧНЫЙ путь `…/shipments/status` без `/**`, поэтому батч проваливается в `anyRequest().authenticated()` и требует валидный **Keycloak-JWT**. При этом сам контроллер батча вызывает тот же `verifyToken(token)` по shared-secret и в Javadoc заявляет «Authenticate with the X-Webhook-Token header (shared secret)». Итог: 1С (у которой есть только shared-secret, но нет JWT) **не может вызвать батч** — эндпойнт для своего единственного назначенного потребителя мёртв.
