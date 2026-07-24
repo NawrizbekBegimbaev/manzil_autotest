@@ -18,10 +18,32 @@ class LoginPage(BasePage):
 
     def __init__(self, page: Page, cfg: Settings) -> None:
         super().__init__(page, cfg)
-        # data-testid is not available; target form fields by placeholder / role.
+        # data-testid недоступен → локаторы по placeholder / role / тексту (XPath запрещён).
         self.phone_input = page.get_by_placeholder("Введите номер телефона")
         self.password_input = page.get_by_placeholder("Введите пароль")
         self.submit_button = page.get_by_role("button", name="Войти")
+        # ── элементы отображения формы (для WEB-AUTH-001/004/006/046 и т.п.) ──
+        self.title = page.get_by_text("Вход в систему", exact=False)
+        self.register_link = page.get_by_text("Зарегистрироваться", exact=False)
+        self.forgot_link = page.get_by_text("Забыли пароль", exact=False)
+        self.country_button = page.get_by_role("button", name="+86")  # дефолт Китай
+        # «глаз» показа пароля — кнопка в MUI-адорнменте поля пароля.
+        self.password_toggle = page.locator(
+            ".MuiInputBase-root:has(input[placeholder='Введите пароль']) button"
+        ).last
+        # переключатель языка (aria-label «Languages button»).
+        self.lang_switcher = page.get_by_role("button", name="Languages button")
+
+    # ── действия (без assert — проверки в тестах) ──
+    def open_zh(self) -> "LoginPage":
+        """Открыть форму на дефолтном (китайском) языке — контекст без RU-пина."""
+        self.goto(self.PATH)
+        return self
+
+    def open_country_picker(self):
+        """Открыть MUI-меню выбора страны (пункты <li> вида «UzbekistanUZ (+998)»)."""
+        self.country_button.first.click()
+        return self.page.get_by_role("menu").last.get_by_role("menuitem")
 
     def open(self) -> "LoginPage":
         self.goto(self.PATH)

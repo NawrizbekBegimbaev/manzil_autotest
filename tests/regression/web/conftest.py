@@ -104,6 +104,24 @@ def fresh_login(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dict):
 
 
 @pytest.fixture
+def web_page(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dict):
+    """Свежий контекст с RU-пином, БЕЗ логина — для тестов самой формы входа (отображение/i18n)."""
+    contexts = []
+
+    def _open() -> Page:
+        ctx = browser.new_context(**web_ctx_kwargs)
+        ctx.add_init_script(FORCE_RU)
+        ctx.set_default_timeout(web_cfg.default_timeout_ms)
+        ctx.set_default_navigation_timeout(web_cfg.nav_timeout_ms)
+        contexts.append(ctx)
+        return ctx.new_page()
+
+    yield _open
+    for ctx in contexts:
+        ctx.close()
+
+
+@pytest.fixture
 def fresh_context_no_ru(browser: Browser, web_cfg: Settings, web_ctx_kwargs: dict):
     """Чистый контекст БЕЗ языкового пина — для China-first кейсов (WEB-AUTH-001/047), проверяющих,
     что первый заход идёт на дефолтном (китайском) языке. FORCE_RU здесь НЕ применяется намеренно."""
