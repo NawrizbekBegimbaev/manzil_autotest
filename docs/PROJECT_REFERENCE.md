@@ -193,6 +193,12 @@ Batch `items` 1–500, each processed in its own tx (one failure doesn't abort o
 - **Notifications** `/me/notifications` (list, unread-count, {id}/read, read-all, delete) + **Devices** `/me/devices`
   (register upsert by emasDeviceId, patch language, delete). Channels enum PUSH+SMS but **only PUSH implemented**.
   Types: TRANSPORT_SELECTED, DRIVERS_ATTACHED.
+  - ⚠ **bid-request PUSH о новом заказе рассылается ВСЕМ перевозчикам, НЕ только eligible** (проверено
+    живьём 2026-07-24: не-isAll перевозчик без городов получает уведомление при любой публикации).
+    Это ОТЛИЧАЕТСЯ от SMS-blast, который фильтрует по +86/городу/isAll. Следствие для тестов: у
+    «пассивного» перевозчика журнал не пуст под параллельными публикациями — проверять состояние
+    конкретных уведомлений, не абсолютные счётчики/пустоту (см. INT-027/032/037). Каждое такое
+    уведомление привязано к заказу (`orderDisplayNumber`); чужих уведомлений не протекает.
 - **SMS**: ⚠ **not implemented** — placeholder. SMS-log endpoint/page returns empty; web "Отправить СМС" & dashboard
   "SMS отправлено=0" are stubs. Don't write SMS-delivery tests.
 - **Blacklist**: backend `TransportCompany.blacklistWarehouseIds` applied in feed only. (Web archive blacklist pages
