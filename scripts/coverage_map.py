@@ -55,6 +55,12 @@ def pending_ids() -> set[str]:
     return _ids_with_automation("pending")
 
 
+def manual_ids() -> set[str]:
+    """IDs marked `automation: manual` — executed by hand (e.g. real-SMS delivery); not
+    CI-automatable. Accounted for (a manual test exists), reported on their own line."""
+    return _ids_with_automation("manual")
+
+
 def covered_ids() -> set[str]:
     seen: set[str] = set()
     for f in glob.glob("tests/regression/**/*.py", recursive=True):
@@ -71,23 +77,30 @@ def main() -> int:
     covered = covered_ids()
     backend = backend_ids()
     pending = pending_ids()
-    accounted = covered | backend  # test-covered OR backend-integration-tracked (pending is NOT here)
+    manual = manual_ids()
+    # test-covered OR backend-integration-tracked OR manual-executed (pending is NOT here)
+    accounted = covered | backend | manual
 
     total = 0
     total_acc = 0
     total_backend = 0
     total_pending = 0
+    total_manual = 0
     print("=== Coverage map (ID кейса ↔ тест/флоу; backend=covered, pending=deferred) ===\n")
     for f, ids in by_file.items():
         acc = [i for i in ids if i in accounted]
         be = [i for i in ids if i in backend]
         pe = [i for i in ids if i in pending]
+        ma = [i for i in ids if i in manual]
         total += len(ids)
         total_acc += len(acc)
         total_backend += len(be)
         total_pending += len(pe)
+        total_manual += len(ma)
         pct = 100 * len(acc) / len(ids) if ids else 0
-        tail = "".join([f"  (backend: {len(be)})" if be else "", f"  (pending: {len(pe)})" if pe else ""])
+        tail = "".join([f"  (backend: {len(be)})" if be else "",
+                        f"  (manual: {len(ma)})" if ma else "",
+                        f"  (pending: {len(pe)})" if pe else ""])
         print(f"{f.split('docs/testcases/')[-1]:40} {len(acc):4}/{len(ids):<4} {pct:5.1f}%{tail}")
         if show_missing and len(acc) < len(ids):
             miss = [i for i in ids if i not in accounted and i not in pending]
@@ -97,7 +110,8 @@ def main() -> int:
                 print("    ⏳ pending:", ", ".join(pe))
 
     pct = 100 * total_acc / total if total else 0
-    print(f"\nИТОГО: {total_acc}/{total} = {pct:.1f}%  (backend: {total_backend}, pending/отложено: {total_pending})")
+    print(f"\nИТОГО: {total_acc}/{total} = {pct:.1f}%  (backend: {total_backend}, "
+          f"manual: {total_manual}, pending/отложено: {total_pending})")
     return 0
 
 

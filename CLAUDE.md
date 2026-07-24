@@ -158,9 +158,13 @@ scripts/run_uat.sh --no-send      # без отправки (отчёт толь
 2. **DEV-регресс — `-n 4 --dist loadgroup`, НЕ `-n auto`.** `-n auto` (16 воркеров) перегружает
    dev-стенд: транзиентные 503 и гонки провизининга (409 name-already-used, таймауты) — падает
    РАЗНЫЙ набор каждый прогон. `-n 4` стабилен и **не медленнее** (узкое место — стенд, а не CPU:
-   оба ~2:06). Эталон полного API-прогона: **986 passed · 16 xfailed · 0 failed** (`scripts/run_regression.sh`).
+   оба ~2–4 мин). Эталон полного API-прогона: **1014 passed · 15 xfailed · 0 failed** (`scripts/run_regression.sh`).
    Зависимые цепочки/флейки под общим состоянием — `@pytest.mark.xdist_group("...")`; `ratelimit`
    — отдельной серийной группой. Имена компаний в фикстурах — ≥10 цифр (иначе орфаны коллидят).
+   **OTP-кейсы регистрации (MNZL-269) жгут общий пер-IP OTP-лимит (~20/10мин)** → маркер `regotp`,
+   вне основного прогона: `scripts/run_registration_otp.sh` (серийно, 14 passed). API-REG-011/068
+   (пер-IP/feed-лимит) — маркер `iplimit`, изолированно. Класс B (verify→complete→gating→reset) —
+   `automation: pending` (нет рабочего OTP-кода на публичном dev). 012/013 — `automation: manual`.
 3. Подготовка данных для Web-тестов — через API, не через UI.
 4. Headless по умолчанию; артефакты только при падении
    (`--tracing retain-on-failure --screenshot only-on-failure`).

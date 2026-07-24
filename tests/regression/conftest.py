@@ -214,6 +214,112 @@ def api(dev_api, api_dev_roles):
     return _for
 
 
+# ─── registration (MNZL-269) provisioning ───────────────────────────────────
+
+
+@pytest.fixture(scope="session")
+def reg_phone():
+    """Factory → a fresh, unregistered +99890 phone for the registration cases.
+
+    Dedicated to registration/reset OTP flows: negatives create no account (the
+    challenge expires in 5 min), so nothing persists. Never reuses the ratelimit
+    or provisioned-tenant phones."""
+    return _uphone
+
+
+@pytest.fixture(scope="session")
+def vehicle_type_id(dev_api, api_dev_roles) -> str:
+    """First vehicle-type id on DEV — needed to create the admin-side driver used by
+    the login / clientType / verification-review cases (no OTP path)."""
+    sa = dev_api.token(*api_dev_roles["super_admin"])
+    r = dev_api.request("GET", "/super-admin/vehicle-types?page=0&size=1", sa)
+    if r.status_code != 200:
+        pytest.skip(f"vehicle-types unavailable on DEV: {r.status_code}")
+    body = r.json()
+    items = body.get("content", body if isinstance(body, list) else [])
+    if not items:
+        pytest.skip("no vehicle types on DEV — cannot provision an admin driver")
+    return items[0]["id"]
+
+
+@dataclass
+class AdminDriver:
+    """A VERIFIED self-employed driver created via the super-admin API (no OTP).
+
+    Stands in for a transporter account in the cases that don't need the PENDING
+    self-registration state: driver login / wrong-app, verification-review on an
+    already-transporter, the verificationStatus list filter.
+    """
+
+    driver_id: str
+    user_id: str
+    phone: str
+    password: str
+    status: str
+
+
+@pytest.fixture(scope="session")
+def admin_driver(dev_api, api_dev_roles, vehicle_type_id) -> AdminDriver:
+    """Create one self-employed driver (role DRIVER, VERIFIED) on DEV via
+    ``POST /super-admin/drivers`` — no OTP involved — and delete it at teardown."""
+    sa = dev_api.token(*api_dev_roles["super_admin"])
+    phone = _uphone()
+    r = _post(dev_api, "/super-admin/drivers", sa, {
+        "fullName": _uname("REGDRV"), "phone": phone, "password": NEW_PWD,
+        "vehicleTypeId": vehicle_type_id, "cardId": "AA" + _digits(7),
+    })
+    body = r.json()
+    drv = AdminDriver(driver_id=body["id"], user_id=body["userId"], phone=phone,
+                      password=NEW_PWD, status=body.get("verificationStatus", "VERIFIED"))
+    yield drv
+    try:
+        dev_api.request("DELETE", f"/super-admin/drivers/{drv.driver_id}", sa)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _make_driver(dev_api, sa: str, vehicle_type_id: str, active: bool) -> tuple[str, str]:
+    """Create a self-employed driver via super-admin; return (driver_id, phone)."""
+    phone = _uphone()
+    r = _post(dev_api, "/super-admin/drivers", sa, {
+        "fullName": _uname("REGST"), "phone": phone, "password": NEW_PWD,
+        "vehicleTypeId": vehicle_type_id, "cardId": "AA" + _digits(7), "active": active,
+    })
+    return r.json()["id"], phone
+
+
+@pytest.fixture(scope="session")
+def blocked_driver_phone(dev_api, api_dev_roles, vehicle_type_id) -> str:
+    """Phone of a DEACTIVATED (active=false) driver — 'phone taken' for registration."""
+    sa = dev_api.token(*api_dev_roles["super_admin"])
+    did, phone = _make_driver(dev_api, sa, vehicle_type_id, active=False)
+    yield phone
+    try:
+        dev_api.request("DELETE", f"/super-admin/drivers/{did}", sa)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+@pytest.fixture(scope="session")
+def deleted_driver_phone(dev_api, api_dev_roles, vehicle_type_id) -> str:
+    """Phone of a SOFT-DELETED driver — still 'phone taken' (no self-service revive)."""
+    sa = dev_api.token(*api_dev_roles["super_admin"])
+    did, phone = _make_driver(dev_api, sa, vehicle_type_id, active=True)
+    dev_api.request("DELETE", f"/super-admin/drivers/{did}", sa)  # soft-delete now
+    return phone
+
+
+@pytest.fixture(scope="session")
+def shipper_user_id(dev_api, api_dev_roles) -> str:
+    """The SHIPPER_ADMIN's own user id (via /me) — a NON-transporter subject for the
+    verification-review 'not-a-transporter' case."""
+    tok = dev_api.token(*api_dev_roles["shipper_admin"])
+    r = dev_api.request("GET", "/me", tok)
+    if r.status_code != 200:
+        pytest.skip(f"/me unavailable for shipper_admin: {r.status_code}")
+    return r.json()["id"]
+
+
 # ─── order-lifecycle provisioning ────────────────────────────────────────────
 
 
