@@ -46,6 +46,13 @@ Login order: (1) Keycloak password grant — wrong creds → **401 `error.invali
 else **401** (generic, never reveals which); (4) `clientType.permits(role)` else **403 `error.wrong-app`**.
 So **bad password→401, good password+wrong app→403**. DRIVER is in no clientType set → always 403.
 
+⚠ **Пред-логинный маркетплейс (подтверждено разработчиком 2026-07-24).** Driver/ТК **просматривают
+ленту заказов БЕЗ сессии** — маркетплейс открыт до авторизации; форма входа/регистрации всплывает
+только при попытке **«Откликнуться»** (отклик на заказ). Часть этого — **публичные справочники**
+`/countries` и `/cities` (200 без токена: дропдауны фильтров ленты работают до логина); `divisions`
+(CN/KG) и всё прочее остаются под auth (401) — граница публичного проходит ровно по странам/городам.
+Всплывёт в листах **transport** (публичная лента) и **rbac+archive** (граница публичного доступа).
+
 `GET /me` → `MeResponse{id, fullName, phone, role, company{id,name,type SHIPPER|TRANSPORT}|null,
 allowedFromWarehouseIds, allowedToWarehouseIds, defaultFromWarehouseId, defaultToWarehouseId}`.
 company null only for SUPER_ADMIN/DRIVER. `allowedFrom/ToWarehouseIds` hold the assigned
