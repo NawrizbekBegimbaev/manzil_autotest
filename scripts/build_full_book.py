@@ -36,6 +36,8 @@ SECTIONS = [
      "/integrations/1c · /shipper/sms · sms-logs · countries · cities · cn/divisions"),
     ("api", "07_rbac_capabilities.json", "API — RBAC", "API — RBAC и capability",
      "Роли · права (capabilities) · tenancy · wrong-app · 401/403/404"),
+    ("api", "08_registration_reset_public.json", "API — Регистрация", "API — Регистрация/Сброс/Публичное",
+     "/auth/register/* (OTP) · /auth/reset/* · transporters/{id}/verification · /public/cargo · публичные справочники"),
     ("web", "01_auth_shell_settings.json", "Web — Auth+Оболочка", "Web — Auth/Оболочка/Настройки",
      "Логин · навигация · язык (China-first) · профиль · настройки"),
     ("web", "02_superadmin.json", "Web — Супер-админ", "Web — SUPER_ADMIN",

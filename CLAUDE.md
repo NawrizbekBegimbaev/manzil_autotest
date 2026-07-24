@@ -7,7 +7,7 @@
 - **Mobile (Android)** — Maestro-флоу (`mobile/`, обёртка `utils/maestro.py`)
 - **API (backend)** — requests-клиент (`utils/api_client.py`)
 
-Плюс — **библиотека из 1497 ручных тест-кейсов** (`docs/testcases/`) и **баг-трекинг** (`docs/BUG_*.md`).
+Плюс — **библиотека из 1574 ручных тест-кейсов** (`docs/testcases/`) и **баг-трекинг** (`docs/BUG_*.md`).
 
 ## Стек и структура
 
@@ -35,7 +35,7 @@ scripts/run_uat.sh --no-send      # без отправки (отчёт толь
 .venv/bin/python scripts/uat_report.py
 
 # Пересборка книг тест-кейсов из JSON (после правок в docs/testcases/{api,web,mobile}/*.json)
-.venv/bin/python scripts/build_full_book.py     # сводная manzil-testcases-full.xlsx (1497)
+.venv/bin/python scripts/build_full_book.py     # сводная manzil-testcases-full.xlsx (1574)
 .venv/bin/python scripts/build_layer_books.py   # 3 послойные книги (api/web/mobile)
 ```
 
@@ -47,11 +47,11 @@ scripts/run_uat.sh --no-send      # без отправки (отчёт толь
 - **dev** — `https://dev-manzil.greatmall.uz` (изолированное, свои аккаунты; здесь проверяются фиксы багов)
 - Дефолтный язык интерфейса — **китайский** (China-first); тесты форсируют язык через `localStorage['__tolgee_currentLanguage']='ru'`.
 
-## Библиотека тест-кейсов (1497)
+## Библиотека тест-кейсов (1574)
 
 Источник истины — **JSON** в `docs/testcases/{api,web,mobile}/*.json`. Из них собираются 4 книги:
-- `manzil-testcases-full.xlsx` — 1497 (все слои + лист «Сводка»)
-- `manzil-api-testcases.xlsx` — 1008 · `manzil-web-testcases.xlsx` — 370 · `manzil-mobile-testcases.xlsx` — 119
+- `manzil-testcases-full.xlsx` — 1574 (все слои + лист «Сводка»)
+- `manzil-api-testcases.xlsx` — 1078 · `manzil-web-testcases.xlsx` — 377 · `manzil-mobile-testcases.xlsx` — 119
 
 Схема кейса (9 полей): `id · razdel · screen · scenario · precond · steps · expected · priority · comment`.
 Кейсы переписаны под **ручное выполнение** (человекочитаемые шаги, наблюдаемый результат, без код-жаргона). Книги xlsx **не редактировать руками** — только JSON, затем пересборка.
