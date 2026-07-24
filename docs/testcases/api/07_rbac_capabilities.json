@@ -942,9 +942,9 @@
   "scenario": "Общие справочники (Dictionary/CN/KG GET) доступны любой аутентифицированной роли",
   "precond": "Вход выполнен под TRANSPORT_ADMIN (подойдёт любая роль). Общие справочники (страны, города, административное деление Китая) читаются любой аутентифицированной ролью.",
   "steps": "1. Запрос: GET /api/v1/countries с заголовком Authorization: Bearer {accessToken} роли TRANSPORT_ADMIN.\n2. Запрос: GET /api/v1/cn/divisions с тем же токеном.\n3. Запрос: GET /api/v1/countries без заголовка Authorization.",
-  "expected": "Шаги 1–2: HTTP 200 — справочники доступны. Шаг 3 (без токена): HTTP 401, code='UNAUTHORIZED'.",
+  "expected": "Страны/города (/countries, /cities) — ПУБЛИЧНЫ: читаются и БЕЗ токена (200; пред-логинный просмотр маркетплейса, подтверждено разработчиком 2026-07-24). Административное деление CN/KG (/cn/divisions, /kg/divisions) — под аутентификацией: без токена 401. Аутентифицированная роль читает все справочники.",
   "priority": "Low",
-  "comment": "rbac|positive"
+  "comment": "rbac|positive · уточнено по факту: countries/cities публичны (пред-логин), divisions под auth (2026-07-24)"
  },
  {
   "id": "API-RBAC-086",

@@ -82,13 +82,16 @@ def test_countries_search_082(reader):
 
 
 @pytest.mark.medium
-@pytest.mark.xfail(reason="dev-drift (DRIFT-001, ждём подтверждения): /countries отдаёт 200 анонимно вопреки @PreAuthorize(isAuthenticated) в исходниках", strict=True)
+@pytest.mark.security
 def test_countries_unauth_083(dev_api):
-    """INT-083: справочник стран без токена → 401 (корректный контракт по исходникам).
-    Факт (dev, 2026-07-24): 200 анонимно — точечно /countries и /cities (divisions → 401).
-    Держим сторож на корректном 401; снимем/синхронизируем после ответа разработчиков (DRIFT-001)."""
-    r = dev_api.request("GET", "/countries", None)
-    assert r.status_code == 401, f"[API-INT-083] {r.status_code}"
+    """INT-083: /countries и /cities ПУБЛИЧНЫ без токена → 200 (пред-логинный просмотр маркетплейса:
+    Driver/ТК листают заказы и фильтруют по стране/городу до авторизации; форма входа всплывает лишь
+    при попытке откликнуться — подтверждено разработчиком 2026-07-24). Граница «публичного» проходит
+    ровно по странам/городам: divisions (CN/KG) по-прежнему требуют auth (401)."""
+    assert dev_api.request("GET", "/countries", None).status_code == 200, "[API-INT-083] /countries публичен → 200"
+    assert dev_api.request("GET", "/cities", None).status_code == 200, "[API-INT-083] /cities публичен → 200"
+    assert dev_api.request("GET", "/cn/divisions?size=1", None).status_code == 401, "[API-INT-083] divisions остаются под auth (401)"
+    assert dev_api.request("GET", "/kg/divisions?size=1", None).status_code == 401, "[API-INT-083] kg-divisions под auth (401)"
 
 
 # ═══ cities (084…088) ════════════════════════════════════════════════════════
